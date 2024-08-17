@@ -1,0 +1,5 @@
+Make a diagram outlining the backend structure of this thing
+
+Code in Azure STT support
+Make the UI look better
+Implement a mood detector (HARD)
