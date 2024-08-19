@@ -30,6 +30,9 @@ def on_submit():
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred: {str(e)}")
 
+        # Clear the entry box after submitting the query
+        entry.delete(0, END)
+
 def generate_and_play(text):
     try:
         # Generate audio using the Elevenlabs API
@@ -45,7 +48,7 @@ def generate_and_play(text):
 
 # Draw the app window
 app = tk.Tk()
-app.title("Hacker Assistant - OpenAI + ElevenLabs")
+app.title("Test")
 app.geometry("800x600")
 app.configure(bg=BACKGROUND_COLOR)
 

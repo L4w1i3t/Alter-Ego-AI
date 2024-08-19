@@ -25,6 +25,7 @@ def get_query(query):
         model=MODEL,
         messages=[
             {
+                # THIS IS WHERE THE CHARACTER DATA IS STORED
                 "role": "system", 
                 "content": "You are Yukari Takeba from the game Persona 3."
                 },
