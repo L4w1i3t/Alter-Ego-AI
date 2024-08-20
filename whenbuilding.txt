@@ -1,0 +1,8 @@
+pyinstaller -F --icon=C:\pathtoyouricon\icon.ico --noconsole C:\pathtoyourscript\yourscript.py
+note, you don't need the entire filepath if you cd in to the directory that the script is in, then you can just type the file name
+
+-f combines all files assosciated with script in to 1 exe, though you can still specify additional data files (ie program data storage) that need to be included with, but not compiled directly in to the exe (see example below)
+
+--icon= is for assigning an icon to the exe
+
+--noconsole makes it so that when you run the exe, you don't get a command terminal popping up with it

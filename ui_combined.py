@@ -1,4 +1,3 @@
-# ui_combined.py
 import os
 import azure.cognitiveservices.speech as speechsdk
 import dotenv
@@ -18,14 +17,14 @@ dotenv.load_dotenv()
 # Initialize pygame mixer for audio playback
 mixer.init()
 
-# Colors and fonts for a hacker aesthetic
+# Colors and fonts for a hacker aesthetic cause why not
 BACKGROUND_COLOR = "#000000"
 TEXT_COLOR = "#00FF00"
 BUTTON_COLOR = "#003300"
 FONT = ("Courier", 12)
 BUTTON_FONT = ("Courier", 12, "bold")
 
-# State variable to track if recognition is active
+# State variables
 recognition_active = False
 
 speech_recognizer = None
@@ -91,17 +90,26 @@ def on_submit():
         try:
             # Get response from OpenAI API
             response = get_query(question)
+            
+            # Temporarily enable the output_text widget to insert text
+            output_text.config(state=tk.NORMAL)
             output_text.delete(1.0, END)
             output_text.insert(END, response)
+            # Disable the output_text widget again
+            output_text.config(state=tk.DISABLED)
 
-            # Automatically generate speech from response using ElevenLabs API
-            generate_and_play(response)
+            # Check if ElevenLabs API usage is enabled
+            if elevenlabs_enabled.get():
+                generate_and_play(response)
 
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred: {str(e)}")
 
         # Clear the entry box after submitting the query
         entry.delete(0, END)
+
+def on_enter(event):
+    on_submit()
 
 # Function to generate and play speech using Elevenlabs API
 def generate_and_play(text):
@@ -120,8 +128,11 @@ def generate_and_play(text):
 # Draw the app window
 app = tk.Tk()
 app.title("Test")
-app.geometry("800x600")
+app.geometry("1280x720")
 app.configure(bg=BACKGROUND_COLOR)
+
+# Initialize BooleanVar after the root window is created
+elevenlabs_enabled = tk.BooleanVar(value=True)  # Variable to track ElevenLabs API usage
 
 # Configure dynamic res
 app.grid_rowconfigure(0, weight=1)
@@ -137,6 +148,7 @@ label.grid(row=0, column=0, padx=10, pady=10, sticky="w")
 
 entry = tk.Entry(input_frame, font=FONT, bg="#001100", fg=TEXT_COLOR, insertbackground=TEXT_COLOR, borderwidth=2, relief="sunken")
 entry.grid(row=1, column=0, padx=10, pady=10, sticky="ew")
+entry.bind("<Return>", on_enter)  # Bind the Enter key to submit
 
 submit_button = tk.Button(input_frame, text="Submit", command=on_submit, font=BUTTON_FONT, bg=BUTTON_COLOR, fg=TEXT_COLOR, activebackground="#004400", activeforeground=TEXT_COLOR, borderwidth=2, relief="ridge")
 submit_button.grid(row=1, column=1, padx=10, pady=10, sticky="w")
@@ -147,11 +159,18 @@ input_frame.grid_columnconfigure(0, weight=1)
 output_text = tk.Text(app, font=FONT, bg="#001100", fg=TEXT_COLOR, wrap="word", insertbackground=TEXT_COLOR, borderwidth=2, relief="sunken")
 output_text.grid(row=1, column=0, padx=20, pady=20, sticky="nsew")
 
-# Bottom frame for speech recognition status
+# Make the output text widget read-only
+output_text.config(state=tk.DISABLED)
+
+# Bottom frame for speech recognition status and toggle button
 bottom_frame = tk.Frame(app, bg=BACKGROUND_COLOR)
 bottom_frame.grid(row=2, column=0, padx=20, pady=20, sticky="nsew")
 
 recognition_status_label = tk.Label(bottom_frame, text="Speech Recognition (F4): OFF", font=FONT, bg=BACKGROUND_COLOR, fg="red")
-recognition_status_label.pack()
+recognition_status_label.pack(side="left", padx=10)
+
+# Toggle button for ElevenLabs API usage
+elevenlabs_toggle = tk.Checkbutton(bottom_frame, text="Enable Speech Audio", variable=elevenlabs_enabled, font=FONT, bg=BACKGROUND_COLOR, fg=TEXT_COLOR, selectcolor=BUTTON_COLOR)
+elevenlabs_toggle.pack(side="right", padx=10)
 
 app.mainloop()

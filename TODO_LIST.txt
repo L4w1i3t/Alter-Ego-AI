@@ -3,3 +3,4 @@ Make a diagram outlining the backend structure of this thing
 Make the UI look better
 Implement a mood detector (HARD)
 Implement a better system for entering information about the bot
+Chat history feature that deletes itself upon exiting
