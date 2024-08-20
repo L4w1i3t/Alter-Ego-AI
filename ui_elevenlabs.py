@@ -1,3 +1,4 @@
+# ui_elevenlabs.py
 import tkinter as tk
 from tkinter import messagebox
 import elevenlabs_api
@@ -29,7 +30,7 @@ def generate_and_play():
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred: {str(e)}")
 
-# Create the main application window
+# Draw the app window
 app = tk.Tk()
 app.title("Elevenlabs Test")
 app.geometry("512x512")

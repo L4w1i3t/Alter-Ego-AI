@@ -1,3 +1,4 @@
+# openai_api.py
 from openai import OpenAI
 import openai
 import dotenv
@@ -27,7 +28,7 @@ def get_query(query):
             {
                 # THIS IS WHERE THE CHARACTER DATA IS STORED
                 "role": "system", 
-                "content": "You are Yukari Takeba from the game Persona 3."
+                "content": "You are Yukari Takeba from the game Persona 3. Your responses should not be any larger than 100 words (ASCII)."
                 },
             {
                 "role": "user",

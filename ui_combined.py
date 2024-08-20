@@ -1,20 +1,90 @@
+# ui_combined.py
+import os
+import azure.cognitiveservices.speech as speechsdk
+import dotenv
+from pynput import keyboard
 import tkinter as tk
 from tkinter import messagebox, END
 from openai_api import get_query
+from azure_stt_api import speech_config
 import elevenlabs_api
 import io
 from pygame import mixer
+import threading
+
+# Load environment variables
+dotenv.load_dotenv()
 
 # Initialize pygame mixer for audio playback
 mixer.init()
 
-# Colors and fonts for a hacker aesthetic because why the hell not
+# Colors and fonts for a hacker aesthetic
 BACKGROUND_COLOR = "#000000"
 TEXT_COLOR = "#00FF00"
 BUTTON_COLOR = "#003300"
-FONT = ("Courier", 12) 
+FONT = ("Courier", 12)
 BUTTON_FONT = ("Courier", 12, "bold")
 
+# State variable to track if recognition is active
+recognition_active = False
+
+speech_recognizer = None
+
+# Function to handle continuous speech recognition
+def continuous_recognition():
+    global speech_recognizer, recognition_active
+
+    # Initialize the Speech Recognizer
+    speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config)
+
+    # Callback when recognized speech is detected
+    def recognized_cb(evt):
+        print(f"Recognized: {evt.result.text}")
+        entry.insert(END, evt.result.text)
+        on_submit()  # Automatically submit the recognized speech as a query
+
+    # Connect event handlers for recognizing events
+    speech_recognizer.recognized.connect(recognized_cb)
+
+    # Start continuous recognition
+    speech_recognizer.start_continuous_recognition()
+
+    print("Continuous recognition started...")
+    while recognition_active:
+        pass  # Keep the thread alive as long as recognition is active
+
+    # Stop recognition when the flag is set to False
+    speech_recognizer.stop_continuous_recognition()
+    print("Continuous recognition stopped...")
+
+# Function to update the speech recognition status label
+def update_recognition_status():
+    if recognition_active:
+        recognition_status_label.config(text="Speech Recognition (F4): ON", fg="lime")
+    else:
+        recognition_status_label.config(text="Speech Recognition (F4): OFF", fg="red")
+
+# Function to handle F4 key press
+def on_press(key):
+    global recognition_active
+
+    try:
+        if key == keyboard.Key.f4:
+            if not recognition_active:
+                recognition_active = True
+                update_recognition_status()
+                threading.Thread(target=continuous_recognition).start()
+            else:
+                recognition_active = False
+                update_recognition_status()
+    except AttributeError:
+        pass
+
+# Start listening for key presses
+listener = keyboard.Listener(on_press=on_press)
+listener.start()
+
+# Function to handle query submission
 def on_submit():
     question = entry.get()
     if question.strip():
@@ -33,6 +103,7 @@ def on_submit():
         # Clear the entry box after submitting the query
         entry.delete(0, END)
 
+# Function to generate and play speech using Elevenlabs API
 def generate_and_play(text):
     try:
         # Generate audio using the Elevenlabs API
@@ -58,7 +129,7 @@ app.grid_rowconfigure(1, weight=5)
 app.grid_rowconfigure(2, weight=1)
 app.grid_columnconfigure(0, weight=1)
 
-# Input
+# Input frame
 input_frame = tk.Frame(app, bg=BACKGROUND_COLOR)
 input_frame.grid(row=0, column=0, padx=20, pady=20, sticky="nsew")
 label = tk.Label(input_frame, text="Enter your query:", font=FONT, bg=BACKGROUND_COLOR, fg=TEXT_COLOR)
@@ -76,7 +147,11 @@ input_frame.grid_columnconfigure(0, weight=1)
 output_text = tk.Text(app, font=FONT, bg="#001100", fg=TEXT_COLOR, wrap="word", insertbackground=TEXT_COLOR, borderwidth=2, relief="sunken")
 output_text.grid(row=1, column=0, padx=20, pady=20, sticky="nsew")
 
+# Bottom frame for speech recognition status
 bottom_frame = tk.Frame(app, bg=BACKGROUND_COLOR)
 bottom_frame.grid(row=2, column=0, padx=20, pady=20, sticky="nsew")
+
+recognition_status_label = tk.Label(bottom_frame, text="Speech Recognition (F4): OFF", font=FONT, bg=BACKGROUND_COLOR, fg="red")
+recognition_status_label.pack()
 
 app.mainloop()

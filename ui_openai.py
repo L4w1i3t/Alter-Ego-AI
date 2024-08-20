@@ -1,3 +1,4 @@
+# ui_openai.py
 from tkinter import Tk, Label, Entry, Button, Text, END
 import tkinter as tk
 from openai_api import get_query
