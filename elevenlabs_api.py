@@ -9,7 +9,7 @@ dotenv.load_dotenv()
 elevenlabs_api_key = os.getenv('ELEVENLABS_API_KEY')
 if not elevenlabs_api_key:
     exit("No Elevenlabs API Key found.")
-print("Your Elevenlabs API key: " + elevenlabs_api_key)
+print("Elevenlabs API Key loaded successfully.")
 elevenlabs.set_api_key(elevenlabs_api_key)
 
 # Load and initiate a voice model and its settings

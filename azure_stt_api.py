@@ -17,8 +17,8 @@ if not subscription_key:
 if not region:
     exit("No Azure Region found.")
 
-print("Your Azure API key: " + subscription_key)
-print("Your Azure region: " + region)
+print("Azure API Key loaded successfully.")
+print("Azure Region loaded successfully.")
 
 # Initialize the SpeechConfig with your subscription key and region
 speech_config = speechsdk.SpeechConfig(subscription=subscription_key, region=region)

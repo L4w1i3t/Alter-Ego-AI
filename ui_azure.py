@@ -1,3 +1,4 @@
+# ui_azure.py
 import azure.cognitiveservices.speech as speechsdk
 from azure_stt_api import speech_config
 import tkinter as tk
