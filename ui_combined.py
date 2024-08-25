@@ -5,7 +5,7 @@ import dotenv
 from pynput import keyboard
 import tkinter as tk
 from tkinter import messagebox, END, StringVar
-from openai_api import get_query
+from openai_api import get_query, load_memory, save_memory
 from azure_stt_api import speech_config
 import elevenlabs_api
 import io
@@ -13,6 +13,7 @@ from pygame import mixer
 import threading
 from datetime import datetime
 import sys
+import json
 
 # Load environment variables
 dotenv.load_dotenv()
@@ -55,10 +56,10 @@ def on_character_select(selection):
     global selected_character_data
     selected_character_data = load_character_data(selection)
 
-character_files = [f for f in os.listdir(CHARACTER_DATA_DIR) if f.endswith('.pers')]
+character_files = [f for f in os.listdir(CHARACTER_DATA_DIR) if f.endswith('.chr')]
 # Check for no available data
 if not character_files:
-    messagebox.showerror("NO CHARACTER DATA FOUND", "No .pers files were found in the characterdata folder. The program will not run until at least one is available.")
+    messagebox.showerror("NO CHARACTER DATA FOUND", "No .chr files were found in the characterdata folder. The program will not run until at least one is available.")
     sys.exit()
 
 # Initialize
@@ -67,7 +68,7 @@ app.title("ALTER EGO")
 app.geometry("1280x720")
 app.configure(bg=BACKGROUND_COLOR)
 
-# Loads character files. Separated from character_files definition because an error throws in that case
+# Load character files
 selected_character = StringVar(app)
 selected_character.set(character_files[0])  # Default selection
 
@@ -146,30 +147,41 @@ listener.start()
 def on_submit():
     question = entry.get()
     if question.strip():
-        try:
-            # Get response from OpenAI API with selected character data
-            response = get_query(question, selected_character_data)
-            
-            # Temporarily enable the output_text widget to insert text
-            output_text.config(state=tk.NORMAL)
-            output_text.delete(1.0, END)
-            output_text.insert(END, response)
-            # Disable the output_text widget again
-            output_text.config(state=tk.DISABLED)
+        # Display "thinking..." in the output text area
+        output_text.config(state=tk.NORMAL)
+        output_text.delete(1.0, END)
+        output_text.insert(END, "Thinking...")
+        output_text.config(state=tk.DISABLED)
 
-            # Check if ElevenLabs API usage is enabled
-            if elevenlabs_enabled.get():
-                generate_and_play(question, response)
+        # Start a thread to generate the response
+        threading.Thread(target=generate_response, args=(question,)).start()
 
-            # Save the response, prompt, and audio
-            if save_query_enabled.get():
-                save_response_data(question, response)
+def generate_response(question):
+    try:
+        # Get response from OpenAI API with selected character data and memory handling
+        response = get_query(question, selected_character.get(), selected_character_data)
+        
+        # Update the UI with the response
+        output_text.config(state=tk.NORMAL)
+        output_text.delete(1.0, END)
+        output_text.insert(END, response)
+        output_text.config(state=tk.DISABLED)
 
-        except Exception as e:
-            messagebox.showerror("Error", f"An error occurred: {str(e)}")
+        # Check if ElevenLabs API usage is enabled
+        if elevenlabs_enabled.get():
+            generate_and_play(question, response)
 
-        # Clear the entry box after submitting the query
-        entry.delete(0, END)
+        # Save the response, prompt, and audio
+        if save_query_enabled.get():
+            save_response_data(question, response)
+
+    except Exception as e:
+        # Show error message
+        messagebox.showerror("Error", f"An error occurred: {str(e)}")
+
+    finally:
+        # Clear the entry box after submitting the query (UI thread-safe)
+        entry.after(0, lambda: entry.delete(0, END))
 
 def on_enter(event):
     on_submit()
