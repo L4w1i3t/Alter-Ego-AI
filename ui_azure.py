@@ -13,7 +13,7 @@ speech_recognizer = None
 
 # Initialize
 app = tk.Tk()
-app.title("Azure Speech Recognition")
+app.title("Azure Test")
 app.geometry("512x512")
 
 # Text widget to display recognized speech

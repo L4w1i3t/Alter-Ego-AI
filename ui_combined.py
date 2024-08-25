@@ -1,5 +1,4 @@
 # ui_combined.py
-# THIS IS THE SCRIPT THAT SHOULD EXECUTE
 import os
 import azure.cognitiveservices.speech as speechsdk
 import dotenv
@@ -13,6 +12,7 @@ import io
 from pygame import mixer
 import threading
 from datetime import datetime
+import sys
 
 # Load environment variables
 dotenv.load_dotenv()
@@ -55,11 +55,21 @@ def on_character_select(selection):
     global selected_character_data
     selected_character_data = load_character_data(selection)
 
-# Draw the app window
+character_files = [f for f in os.listdir(CHARACTER_DATA_DIR) if f.endswith('.pers')]
+# Check for no available data
+if not character_files:
+    messagebox.showerror("NO CHARACTER DATA FOUND", "No .pers files were found in the characterdata folder. The program will not run until at least one is available.")
+    sys.exit()
+
+# Initialize
 app = tk.Tk()
 app.title("ALTER EGO")
 app.geometry("1280x720")
 app.configure(bg=BACKGROUND_COLOR)
+
+# Loads character files. Separated from character_files definition because an error throws in that case
+selected_character = StringVar(app)
+selected_character.set(character_files[0])  # Default selection
 
 # Character selection container frame
 character_frame = tk.Frame(app, bg=BACKGROUND_COLOR)
@@ -68,10 +78,6 @@ character_frame.grid(row=0, column=0, padx=20, pady=10, sticky="w", columnspan=2
 # Character selection section
 character_section_label = tk.Label(character_frame, text="Select Character Data", font=("Courier", 14, "bold"), bg=BACKGROUND_COLOR, fg=TEXT_COLOR)
 character_section_label.grid(row=0, column=0, padx=10, pady=5, sticky="w")
-
-character_files = [f for f in os.listdir(CHARACTER_DATA_DIR) if f.endswith('.pers')]
-selected_character = StringVar(app)
-selected_character.set(character_files[0])  # Default selection
 
 # Create a dropdown menu for character selection
 character_dropdown = tk.OptionMenu(character_frame, selected_character, *character_files, command=on_character_select)
@@ -153,7 +159,11 @@ def on_submit():
 
             # Check if ElevenLabs API usage is enabled
             if elevenlabs_enabled.get():
-                generate_and_play(response)
+                generate_and_play(question, response)
+
+            # Save the response, prompt, and audio
+            if save_query_enabled.get():
+                save_response_data(question, response)
 
         except Exception as e:
             messagebox.showerror("Error", f"An error occurred: {str(e)}")
@@ -165,37 +175,42 @@ def on_enter(event):
     on_submit()
 
 # Function to generate and play speech using Elevenlabs API
-def generate_and_play(text):
+def generate_and_play(text, response):
     try:
         # Generate audio using the Elevenlabs API
-        audio = elevenlabs_api.generate_audio(text)
+        audio = elevenlabs_api.generate_audio(response)
 
         # Play the audio using pygame mixer
         audio_io = io.BytesIO(audio)
         mixer.music.load(audio_io, 'mp3')
         mixer.music.play()
 
-        # Save audio file if saving is enabled
-        if save_audio_enabled.get():
-            save_audio_file(audio)
-
     except Exception as e:
         messagebox.showerror("Error", f"An error occurred: {str(e)}")
 
-# Function to save the audio file to the responsehistory folder
-def save_audio_file(audio):
+# Function to save the response data (text and audio) to the responsehistory folder
+def save_response_data(prompt, response):
     try:
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        file_name = f"response_{timestamp}.mp3"
-        file_path = os.path.join(RESPONSE_HISTORY_DIR, file_name)
+        response_folder = os.path.join(RESPONSE_HISTORY_DIR, f"response_{timestamp}")
+        os.makedirs(response_folder, exist_ok=True)
 
-        with open(file_path, "wb") as f:
-            f.write(audio)
+        # Save the text response and prompt
+        with open(os.path.join(response_folder, "prompt.txt"), "w") as f:
+            f.write(f"Prompt: {prompt}\n")
+        with open(os.path.join(response_folder, "response.txt"), "w") as f:
+            f.write(f"Response: {response}\n")
 
-        print(f"Audio saved to {file_path}")
+        # Save the audio response (if available)
+        if elevenlabs_enabled.get():
+            audio = elevenlabs_api.generate_audio(response)
+            with open(os.path.join(response_folder, "response.mp3"), "wb") as f:
+                f.write(audio)
+
+        print(f"Response data saved to {response_folder}")
 
     except Exception as e:
-        messagebox.showerror("Error", f"An error occurred while saving the audio: {str(e)}")
+        messagebox.showerror("Error", f"An error occurred while saving the response data: {str(e)}")
 
 # Function to clear all files in the responsehistory folder
 def clear_response_history():
@@ -204,6 +219,10 @@ def clear_response_history():
             file_path = os.path.join(RESPONSE_HISTORY_DIR, file_name)
             if os.path.isfile(file_path):
                 os.remove(file_path)
+            elif os.path.isdir(file_path):
+                for sub_file in os.listdir(file_path):
+                    os.remove(os.path.join(file_path, sub_file))
+                os.rmdir(file_path)
         
         messagebox.showinfo("Clear Response History", "All files in the responsehistory folder have been deleted.")
     except Exception as e:
@@ -218,7 +237,7 @@ def toggle_settings_menu():
 
 # Initialize BooleanVar after the root window is created
 elevenlabs_enabled = tk.BooleanVar(value=True)  # Variable to track ElevenLabs API usage
-save_audio_enabled = tk.BooleanVar(value=False)  # Variable to track saving audio files
+save_query_enabled = tk.BooleanVar(value=False)  # Variable to track saving audio files
 
 # Configure dynamic res
 app.grid_rowconfigure(1, weight=1)
@@ -265,11 +284,11 @@ settings_frame.grid(row=0, column=1, rowspan=4, sticky="nsew", padx=10, pady=10)
 settings_frame.grid_remove()  # Initially hidden
 
 # Settings options inside the settings frame
-elevenlabs_toggle = tk.Checkbutton(settings_frame, text="Enable Speech Audio", variable=elevenlabs_enabled, font=FONT, bg=BACKGROUND_COLOR, fg=TEXT_COLOR, selectcolor=BUTTON_COLOR)
+elevenlabs_toggle = tk.Checkbutton(settings_frame, text="Response Audio", variable=elevenlabs_enabled, font=FONT, bg=BACKGROUND_COLOR, fg=TEXT_COLOR, selectcolor=BUTTON_COLOR)
 elevenlabs_toggle.pack(anchor="w", pady=5)
 
-save_audio_toggle = tk.Checkbutton(settings_frame, text="Save Audio Files", variable=save_audio_enabled, font=FONT, bg=BACKGROUND_COLOR, fg=TEXT_COLOR, selectcolor=BUTTON_COLOR)
-save_audio_toggle.pack(anchor="w", pady=5)
+save_query_toggle = tk.Checkbutton(settings_frame, text="Save History", variable=save_query_enabled, font=FONT, bg=BACKGROUND_COLOR, fg=TEXT_COLOR, selectcolor=BUTTON_COLOR)
+save_query_toggle.pack(anchor="w", pady=5)
 
 clear_history_button = tk.Button(settings_frame, text="Clear Response History", command=clear_response_history, font=BUTTON_FONT, bg=BUTTON_COLOR, fg=TEXT_COLOR, activebackground="#004400", activeforeground=TEXT_COLOR, borderwidth=2, relief="ridge")
 clear_history_button.pack(anchor="w", pady=5)

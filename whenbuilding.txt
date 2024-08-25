@@ -1,3 +1,5 @@
+# TAKEN FROM A REDDIT COMMENT
+
 pyinstaller -F --icon=C:\pathtoyouricon\icon.ico --noconsole C:\pathtoyourscript\yourscript.py
 note, you don't need the entire filepath if you cd in to the directory that the script is in, then you can just type the file name
 

@@ -34,6 +34,6 @@ def get_query(query, character_data):
                 "content": query
             }
         ],
-        max_tokens=100
+        #max_tokens=100
     )
     return completion.choices[0].message.content

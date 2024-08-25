@@ -22,4 +22,3 @@ print("Azure Region loaded successfully.")
 
 # Initialize the SpeechConfig with your subscription key and region
 speech_config = speechsdk.SpeechConfig(subscription=subscription_key, region=region)
-
