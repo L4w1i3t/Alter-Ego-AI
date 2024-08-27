@@ -1,18 +1,19 @@
 # ui_combined.py
 import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import azure.cognitiveservices.speech as speechsdk
 import dotenv
 from pynput import keyboard
 import tkinter as tk
 from tkinter import messagebox, END, StringVar
-from openai_api import get_query, load_memory, save_memory
-from azure_stt_api import speech_config
-import elevenlabs_api
+from api.openai_api import get_query, load_memory, save_memory
+from api.azure_stt_api import speech_config
+from api import elevenlabs_api
 import io
 from pygame import mixer
 import threading
 from datetime import datetime
-import sys
 import json
 
 # Load environment variables
@@ -21,14 +22,16 @@ dotenv.load_dotenv()
 # Initialize pygame mixer for audio playback
 mixer.init()
 
-# Directory to save response history
-RESPONSE_HISTORY_DIR = os.path.join(os.getcwd(), "responsehistory")
+# Directory to save response history, ensuring it is in the same location as the script
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+RESPONSE_HISTORY_DIR = os.path.join(BASE_DIR, "../responsehistory")
 
 # Ensure responsehistory directory exists
 os.makedirs(RESPONSE_HISTORY_DIR, exist_ok=True)
 
+
 # Directory for character data
-CHARACTER_DATA_DIR = os.path.join(os.getcwd(), "characterdata")
+CHARACTER_DATA_DIR = os.path.join(BASE_DIR, "../characterdata")
 
 # Colors and fonts for a hacker aesthetic cause why not
 BACKGROUND_COLOR = "#000000"

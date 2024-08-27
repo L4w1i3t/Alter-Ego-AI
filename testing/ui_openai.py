@@ -1,7 +1,10 @@
 # ui_openai.py
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from tkinter import Tk, Label, Entry, Button, Text, END
 import tkinter as tk
-from openai_api import get_query
+from api.openai_api import get_query
 
 def on_submit():
     question = entry.get()

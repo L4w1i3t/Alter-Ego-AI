@@ -1,7 +1,10 @@
 # ui_elevenlabs.py
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import tkinter as tk
 from tkinter import messagebox
-import elevenlabs_api
+from api import elevenlabs_api
 import io
 from pygame import mixer
 

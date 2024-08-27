@@ -1,6 +1,9 @@
 # ui_azure.py
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import azure.cognitiveservices.speech as speechsdk
-from azure_stt_api import speech_config
+from api.azure_stt_api import speech_config
 import tkinter as tk
 from pynput import keyboard
 
