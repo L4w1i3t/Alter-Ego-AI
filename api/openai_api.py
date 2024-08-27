@@ -18,7 +18,7 @@ MODEL = "gpt-4o"
 
 # Function to load memory for a character
 def load_memory(character_file):
-    memory_file = os.path.join("characterdata", f"{character_file}_mem.json")
+    memory_file = os.path.join("../characterdata", f"{character_file}_mem.json")
     if os.path.exists(memory_file):
         with open(memory_file, "r") as file:
             return json.load(file)
@@ -27,7 +27,7 @@ def load_memory(character_file):
 
 # Function to save memory for a character
 def save_memory(character_file, memory):
-    memory_file = os.path.join("characterdata", f"{character_file}_mem.json")
+    memory_file = os.path.join("../characterdata", f"{character_file}_mem.json")
     with open(memory_file, "w") as file:
         json.dump(memory, file, indent=4)
 

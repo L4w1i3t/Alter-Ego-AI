@@ -22,6 +22,4 @@ def clear_memory_files():
     except Exception as e:
         print(f"An error occurred: {str(e)}")
 
-# Run the function to clear memory files
-if __name__ == "__main__":
-    clear_memory_files()
+clear_memory_files()
