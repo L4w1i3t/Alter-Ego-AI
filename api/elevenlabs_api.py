@@ -7,15 +7,11 @@ import sys
 # Load environment variables
 dotenv.load_dotenv()
 
-# Get the API key from environment variables
 api_key = os.getenv("ELEVENLABS_API_KEY")
-
-# Check if the API key is found, if not, exit with an error message
 if not api_key:
     exit("No ElevenLabs API Key found.")
 print("ElevenLabs API Key loaded successfully.")
 
-# Initialize the ElevenLabs client
 client_init = ElevenLabs(
     api_key=api_key,
 )

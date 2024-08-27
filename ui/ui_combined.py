@@ -1,5 +1,6 @@
 # ui_combined.py
 import os
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import azure.cognitiveservices.speech as speechsdk
@@ -14,7 +15,6 @@ import io
 from pygame import mixer
 import threading
 from datetime import datetime
-import json
 
 # Load environment variables
 dotenv.load_dotenv()
