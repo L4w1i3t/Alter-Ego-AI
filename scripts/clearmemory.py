@@ -1,5 +1,5 @@
 # clearmemory.py
-# Run the neuralyzer.bat file to run this file easily and clear all character files' memory
+# Run the neuralyzer.bat file to run this file and clear all character files' memory
 import os
 
 # Directory where character memory files are stored

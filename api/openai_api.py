@@ -1,5 +1,4 @@
 # openai_api.py
-from openai import OpenAI
 import openai
 import dotenv
 import os
@@ -12,22 +11,27 @@ openai_api_key = os.getenv('OPENAI_API_KEY')
 if not openai_api_key:
     exit("No OpenAI API Key found.")
 print("OpenAI API Key loaded successfully.")
-client = OpenAI(api_key=openai_api_key)
+client = openai.OpenAI(api_key=openai_api_key)
 
 MODEL = "gpt-4o"
 
+# Base directory for character data
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CHARACTER_DATA_DIR = os.path.join(BASE_DIR, "../characterdata")
+
 # Function to load memory for a character
 def load_memory(character_file):
-    memory_file = os.path.join("../characterdata", f"{character_file}_mem.json")
+    memory_file = os.path.join(CHARACTER_DATA_DIR, f"{character_file}_mem.json")
     if os.path.exists(memory_file):
         with open(memory_file, "r") as file:
             return json.load(file)
     else:
+        # Return default memory structure if the file does not exist
         return {"short_term": [], "long_term": []}
 
 # Function to save memory for a character
 def save_memory(character_file, memory):
-    memory_file = os.path.join("../characterdata", f"{character_file}_mem.json")
+    memory_file = os.path.join(CHARACTER_DATA_DIR, f"{character_file}_mem.json")
     with open(memory_file, "w") as file:
         json.dump(memory, file, indent=4)
 
@@ -39,8 +43,8 @@ def update_memory(character_file, memory, new_entry):
     # Keep only the latest 5 entries in short-term memory
     memory['short_term'] = memory['short_term'][-5:]  # Keeping the latest 5 interactions
     
-    # Optionally, move older entries to long-term memory
-    if len(memory['short_term']) > 3:
+    # Move older entries to long-term memory
+    if len(memory['short_term']) > 4:
         memory['long_term'].append(memory['short_term'].pop(0))
     
     save_memory(character_file, memory)
@@ -75,7 +79,7 @@ def get_query(query, character_file, character_data):
     completion = client.chat.completions.create(
         model=MODEL,
         messages=messages,
-        max_tokens=100
+        max_tokens=200
     )
     
     # Update memory with the new interaction
