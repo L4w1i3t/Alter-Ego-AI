@@ -1,8 +1,8 @@
+# elevenlabs_api.py
 import elevenlabs
 from elevenlabs.client import ElevenLabs
 import os
 import dotenv
-import sys
 
 # Load environment variables
 dotenv.load_dotenv()
@@ -12,26 +12,34 @@ if not api_key:
     exit("No ElevenLabs API Key found.")
 print("ElevenLabs API Key loaded successfully.")
 
+# init
 client_init = ElevenLabs(
     api_key=api_key,
 )
 
-# Load and initiate a voice model and its settings
-voice_model = elevenlabs.Voice(
-    voice_id="oFxovaqXut8XX19I4UGi",
-    settings=elevenlabs.VoiceSettings(
-        stability=0.5,
-        similarity_boost=0.75
-    )
-)
+# Available voice models
+voice_models = {
+    "Yukari Takeba (DEFAULT)": elevenlabs.Voice(voice_id="oFxovaqXut8XX19I4UGi"),
+    "Yukari Takeba (ORIGINAL)": elevenlabs.Voice(voice_id="r9KOIKrF66IfRxj8R8hN"),
+    "My roommate David": elevenlabs.Voice(voice_id="RaLB9SP9w3NGygxqOomT"),
+}
+
+# Set a default voice model
+current_voice_model = voice_models["Yukari Takeba (DEFAULT)"]
+
+def change_voice_model(model_name):
+    global current_voice_model
+    if model_name in voice_models:
+        current_voice_model = voice_models[model_name]
+    else:
+        raise ValueError(f"Voice model '{model_name}' not found.")
 
 def generate_audio(text):
-    global voice
     try:
-        # Generate the audio using the Elevenlabs API
+        # Generate the audio using the current voice model
         audio = client_init.generate(
             text=text,
-            voice=voice_model,
+            voice=current_voice_model,
             model="eleven_multilingual_v2"
         )
         # Convert the stream (generator) to bytes

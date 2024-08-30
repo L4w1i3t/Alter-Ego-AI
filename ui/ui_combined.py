@@ -29,7 +29,6 @@ RESPONSE_HISTORY_DIR = os.path.join(BASE_DIR, "../responsehistory")
 # Ensure responsehistory directory exists
 os.makedirs(RESPONSE_HISTORY_DIR, exist_ok=True)
 
-
 # Directory for character data
 CHARACTER_DATA_DIR = os.path.join(BASE_DIR, "../characterdata")
 
@@ -37,8 +36,8 @@ CHARACTER_DATA_DIR = os.path.join(BASE_DIR, "../characterdata")
 BACKGROUND_COLOR = "#000000"
 TEXT_COLOR = "#00FF00"
 BUTTON_COLOR = "#003300"
-FONT = ("Courier", 12)
-BUTTON_FONT = ("Courier", 12, "bold")
+FONT = ("Ariel", 12)
+BUTTON_FONT = ("Ariel", 12, "bold")
 
 recognition_active = False
 speech_recognizer = None
@@ -64,6 +63,13 @@ character_files = [f for f in os.listdir(CHARACTER_DATA_DIR) if f.endswith('.chr
 if not character_files:
     messagebox.showerror("NO CHARACTER DATA FOUND", "No .chr files were found in the characterdata folder. The program will not run until at least one is available.")
     sys.exit()
+
+# Function to handle voice model selection change
+def on_voice_model_select(selection):
+    try:
+        elevenlabs_api.change_voice_model(selection)
+    except Exception as e:
+        messagebox.showerror("Error", f"An error occurred while changing the voice model: {str(e)}")
 
 # Initialize
 app = tk.Tk()
@@ -188,6 +194,20 @@ def generate_response(question):
 
 def on_enter(event):
     on_submit()
+
+# Load available voice models (keys of the dictionary in elevenlabs_api)
+voice_models = list(elevenlabs_api.voice_models.keys())
+selected_voice_model = StringVar(app)
+selected_voice_model.set(voice_models[0])  # Default selection
+
+# Add the Voice Model Dropdown Menu below character selection
+voice_model_label = tk.Label(character_frame, text="Select Voice Model", font=("Courier", 14, "bold"), bg=BACKGROUND_COLOR, fg=TEXT_COLOR)
+voice_model_label.grid(row=1, column=0, padx=10, pady=5, sticky="w")
+
+voice_model_dropdown = tk.OptionMenu(character_frame, selected_voice_model, *voice_models, command=on_voice_model_select)
+voice_model_dropdown.config(font=FONT, bg=BUTTON_COLOR, fg=TEXT_COLOR, highlightthickness=0)
+voice_model_dropdown["menu"].config(font=FONT, bg=BACKGROUND_COLOR, fg=TEXT_COLOR)
+voice_model_dropdown.grid(row=1, column=1, padx=10, pady=5, sticky="w")
 
 # Function to generate and play speech using Elevenlabs API
 def generate_and_play(text, response):
