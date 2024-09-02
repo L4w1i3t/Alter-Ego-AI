@@ -212,13 +212,23 @@ def generate_response(question):
     try:
         response = get_query(question, selected_character.get(), selected_character_data)
 
-        def animate_and_display_emotions():
-            animate_text(output_text, response)
+        def process_emotions_and_display():
             if detect_emotions_enabled.get():
                 emotions = detect_emotions([response])
-                display_emotions(emotions[0])
 
-        threading.Thread(target=animate_and_display_emotions, daemon=True).start()
+                # Find the emotion with the highest score and change the sprite
+                if emotions[0]:
+                    highest_emotion = max(emotions[0], key=emotions[0].get)
+                    avatar_window.change_sprite(highest_emotion)
+
+            # Now start animating the text after the sprite has been updated
+            animate_text(output_text, response)
+            
+            # Display emotions in the emotions text box
+            display_emotions(emotions[0])
+
+        # Start processing emotions and animating text in a separate thread
+        threading.Thread(target=process_emotions_and_display, daemon=True).start()
 
         if elevenlabs_enabled.get():
             generate_and_play(response)

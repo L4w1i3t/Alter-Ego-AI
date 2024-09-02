@@ -4,7 +4,6 @@ import tkinter as tk
 from PIL import Image, ImageTk
 
 class AvatarWindow:
-    # Default image
     def __init__(self, parent_frame, default_image="neutral.png"):
         self.parent_frame = parent_frame
         self.avatar_image = None
@@ -56,3 +55,42 @@ class AvatarWindow:
         new_width = event.width
         new_height = event.height
         self.update_image(new_width, new_height)
+
+    def change_sprite(self, emotion):
+        # Map emotion labels to corresponding image filenames
+        emotion_to_image = {
+            "admiration": "admiration.png", #
+            "amusement": "amusement.png", #
+            "anger": "anger.png", #
+            "annoyance": "annoyance.png", #
+            "approval": "approval.png", #
+            "caring": "caring.png", #
+            "confusion": "confusion.png", #
+            "curiosity": "curiosity.png", #
+            "desire": "desire.png", #
+            "disappointment": "disappointment.png", #
+            "disapproval": "disapproval.png", #
+            "disgust": "disgust.png", #
+            "embarrassment": "embarrassment.png", #
+            "excitement": "excitement.png", #
+            "fear": "fear.png", #
+            "gratitude": "gratitude.png",
+            "grief": "grief.png", #
+            "joy": "joy.png", #
+            "love": "love.png", #
+            "neutral": "neutral.png", #
+            "nervousness": "nervousness.png", #
+            "optimism": "optimism.png", #
+            "pride": "pride.png", #
+            "realization": "realization.png", #
+            "relief": "relief.png", #
+            "remorse": "remorse.png", #
+            "sadness": "sadness.png", #
+            "surprise": "surprise.png" #
+        }
+
+        # Get the corresponding image filename
+        image_name = emotion_to_image.get(emotion.lower(), "neutral.png")
+        
+        # Load the new image
+        self.load_image(image_name)
