@@ -19,7 +19,7 @@ MODEL = "gpt-4o"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CHARACTER_DATA_DIR = os.path.join(BASE_DIR, "../characterdata")
 
-# Function to load memory for a character
+# Load memory for a character
 def load_memory(character_file):
     memory_file = os.path.join(CHARACTER_DATA_DIR, f"{character_file}_mem.json")
     if os.path.exists(memory_file):
@@ -51,11 +51,10 @@ def update_memory(character_file, memory, new_entry):
 
 # Function to handle queries with character memory integration
 def get_query(query, character_file, character_data):
-    # Load memory for the character
     memory = load_memory(character_file)
     
     # Combine short-term and long-term memory into the conversation context
-    # Convert each memory entry (which is a dict) to a string
+    # Convert each memory dict to a string
     memory_entries = [f"User: {entry['query']}\nAssistant: {entry['response']}" for entry in memory['long_term'] + memory['short_term']]
     memory_context = "\n".join(memory_entries)
     
@@ -79,7 +78,7 @@ def get_query(query, character_file, character_data):
     completion = client.chat.completions.create(
         model=MODEL,
         messages=messages,
-        max_tokens=200
+        max_tokens=100
     )
     
     # Update memory with the new interaction

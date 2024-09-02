@@ -1,9 +1,0 @@
-{
-    "short_term": [
-        {
-            "query": "hi",
-            "response": "Hello. To use this program, follow these instructions:\n\n1. **Character Selection:**\n   - Use the dropdown menu above the query box to select the character data you want to use. This dropdown will list all available `.chr` files in the `characterdata` directory.\n\n2. **Input Query:**\n   - Enter your query in the entry box labeled \"Enter your query\" and press \"Submit\" or hit the \"Enter\" key.\n\n3. **Speech Recognition:**\n   - Press the \"F4\" key to toggle speech recognition on or off. The status of speech recognition will be displayed at the bottom of the window.\n\n4. **Response:**\n   - The response to your query will be displayed in the output text area. If the ElevenLabs API is enabled, the text response will also be converted to speech.\n\n5. **Settings:**\n   - Click the hamburger menu (\u2261) button at the bottom right to access the settings menu. Here, you"
-        }
-    ],
-    "long_term": []
-}
