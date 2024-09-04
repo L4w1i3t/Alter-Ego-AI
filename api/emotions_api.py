@@ -82,4 +82,4 @@ sample_texts = [
             #print(f"  {emotion.capitalize():<15}: {score:.2f}")
     #else:
         #print("  No significant emotions detected.")
-    #rint()
+    #print()

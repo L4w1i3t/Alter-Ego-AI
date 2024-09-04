@@ -1,0 +1,12 @@
+{
+  "name": "alter-ego-gui",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "dependencies": {
+    "electron": "^32.0.1",
+    "python-shell": "^5.0.0"
+  }
+}

@@ -26,7 +26,7 @@ from api.openai_api import get_query, load_memory, save_memory
 from api.azure_stt_api import speech_config
 from api import elevenlabs_api
 from api.emotions_api import detect_emotions
-from avatar import AvatarWindow
+from avatar.avatar import AvatarWindow
 
 # Load environment variables
 dotenv.load_dotenv()

@@ -1,3 +1,4 @@
 .env
 whenbuilding.txt
 venv/
+ui/ui_js/node_modules/
