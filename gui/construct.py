@@ -24,15 +24,15 @@ class ChatHistoryDialog(QDialog):
         """)
 
     def load_character_memory(self, character_file):
-        memory_file = os.path.join(os.path.dirname(__file__), 'characterdata', f'{character_file}_mem.json')
+        memory_file = os.path.join(os.path.dirname(__file__), '../characterdata', f'{character_file}_mem.json')
         if os.path.exists(memory_file):
             with open(memory_file, 'r') as file:
                 memory = json.load(file)
                 for entry in memory.get('long_term', []):
-                    chat_entry = f"User (Long-term): {entry['query']}\nAssistant: {entry['response']}"
+                    chat_entry = f"User (Long-term): {entry['query']}\n{character_file}: {entry['response']}"
                     self.chat_history_list.addItem(QListWidgetItem(chat_entry))
                 for entry in memory.get('short_term', []):
-                    chat_entry = f"User (Short-term): {entry['query']}\nAssistant: {entry['response']}"
+                    chat_entry = f"User (Short-term): {entry['query']}\n{character_file}: {entry['response']}"
                     self.chat_history_list.addItem(QListWidgetItem(chat_entry))
         else:
             self.chat_history_list.addItem(QListWidgetItem("No memory file found for this character."))

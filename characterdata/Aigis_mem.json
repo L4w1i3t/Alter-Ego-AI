@@ -2,7 +2,11 @@
     "short_term": [
         {
             "query": "hi",
-            "response": "Greetings. Is there something specific you wish to discuss?"
+            "response": "Hello! How can I assist you today?"
+        },
+        {
+            "query": "hi",
+            "response": "Hello. How are you today? Is there something specific you wish to discuss?"
         }
     ],
     "long_term": []

@@ -1,5 +1,8 @@
 # gui.py
 import os
+import sys
+# Add the parent directory to sys.path for module imports
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import io
 import dotenv
 from PyQt5.QtWidgets import (
@@ -166,7 +169,7 @@ class AlterEgo(QMainWindow):
                 font-size: 14px;
             }
             QPushButton#loadButton {
-                font-size: 14px;
+                font-size: 15px;
             }
             QPushButton#sendButton {
                 font-size: 15px;
@@ -202,7 +205,7 @@ class AlterEgo(QMainWindow):
 
     def load_default_character(self):
         default_character_file = "DEFAULT"
-        character_path = os.path.join(os.path.dirname(__file__), 'characterdata', f"{default_character_file}.chr")
+        character_path = os.path.join(os.path.dirname(__file__), '../characterdata', f"{default_character_file}.chr")
         if os.path.exists(character_path):
             with open(character_path, 'r') as file:
                 self.character_file = default_character_file
@@ -217,7 +220,7 @@ class AlterEgo(QMainWindow):
 
     def load_character(self):
         options = QFileDialog.Options()
-        character_data_dir = os.path.join(os.path.dirname(__file__), 'characterdata')
+        character_data_dir = os.path.join(os.path.dirname(__file__), '../characterdata')
         file_name, _ = QFileDialog.getOpenFileName(self, "Select Character File", character_data_dir, "Character Files (*.chr);;All Files (*)", options=options)
         if file_name:
             self.character_file = os.path.splitext(os.path.basename(file_name))[0]
