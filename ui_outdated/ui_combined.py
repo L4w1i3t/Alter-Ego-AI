@@ -1,4 +1,7 @@
 # ui_combined.py
+"""
+THIS GUI IS OUTDATED. PLEASE USE THE NEWER ONE.
+"""
 import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 
@@ -26,7 +29,7 @@ from api.openai_api import get_query, load_memory, save_memory
 from api.azure_stt_api import speech_config
 from api import elevenlabs_api
 from api.emotions_api import detect_emotions
-from avatar.avatar import AvatarWindow
+from avatar.avatar_outdated import AvatarWindow
 
 # Load environment variables
 dotenv.load_dotenv()

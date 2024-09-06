@@ -1,0 +1,9 @@
+{
+    "short_term": [
+        {
+            "query": "hi",
+            "response": "Greetings. Is there something specific you wish to discuss?"
+        }
+    ],
+    "long_term": []
+}

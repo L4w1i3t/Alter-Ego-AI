@@ -2,7 +2,6 @@
 import os
 import azure.cognitiveservices.speech as speechsdk
 import dotenv
-from pynput import keyboard
 
 # Load environment variables
 dotenv.load_dotenv()
