@@ -112,15 +112,15 @@ class AlterEgo(QMainWindow):
         voice_model_layout.addWidget(self.voice_model_label)
 
         self.voice_model_combo = QComboBox()
-        combo_font = QFont('Courier New', 14)  # Match font size of label
-        self.voice_model_combo.setFont(combo_font)  # Apply the font to combo box
+        combo_font = QFont('Courier New', 14)
+        self.voice_model_combo.setFont(combo_font)
         self.voice_model_combo.addItems(voice_models.keys())
         self.voice_model_combo.currentTextChanged.connect(self.on_voice_model_changed)
         voice_model_layout.addWidget(self.voice_model_combo)
 
-        voice_model_layout.addSpacerItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))  # Spacer to push combo box to the left
+        voice_model_layout.addSpacerItem(QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
 
-        self.layout.addLayout(voice_model_layout)  # Add layout to the main window
+        self.layout.addLayout(voice_model_layout)
 
         central_widget.setLayout(self.layout)
 
@@ -243,7 +243,7 @@ class AlterEgo(QMainWindow):
 
         # Create a new worker thread for the query
         self.worker = QueryWorker(query, self.character_file, self.character_data)
-        self.worker.result_ready.connect(self.display_response_animated)  # Connect to the signal
+        self.worker.result_ready.connect(self.display_response_animated) 
         self.worker.error_occurred.connect(self.display_error)
         self.worker.start()
 
