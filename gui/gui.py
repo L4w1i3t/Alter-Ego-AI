@@ -1,10 +1,13 @@
 # gui.py
 import os
 import sys
-# Add the parent directory to sys.path for module imports
+# Add the root to sys.path for module imports. Code breaks without this
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import io
 import dotenv
+import warnings
+# suppress all warning
+warnings.simplefilter(action='ignore', category=FutureWarning)
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, 
     QPushButton, QTextEdit, QLabel, 
@@ -23,6 +26,9 @@ from api.elevenlabs_api import change_voice_model, voice_models
 # Import the workers and constructors
 from workers import QueryWorker, SpeechRecognitionWorker, ElevenLabsAudioWorker
 from construct import ChatHistoryDialog
+
+# Import AvatarWidget for the image window
+from avatar.avatar import AvatarWidget
 
 # Initialize pygame mixer for audio playback
 mixer.init()
@@ -73,14 +79,28 @@ class AlterEgo(QMainWindow):
 
         self.layout.addLayout(input_and_button_layout)
 
+        # Response and Avatar Layout
+        response_and_avatar_layout = QHBoxLayout()
+
         # Response display area
         self.response_label = QLabel("Response:")
         self.response_label.setFont(QFont('Courier New', 14))
         self.response_display = QTextEdit()
         self.response_display.setFont(QFont('Courier New', 14))
         self.response_display.setReadOnly(True)
-        self.layout.addWidget(self.response_label)
-        self.layout.addWidget(self.response_display)
+
+        response_layout = QVBoxLayout()
+        response_layout.addWidget(self.response_label)
+        response_layout.addWidget(self.response_display)
+
+        # Avatar display area
+        self.avatar_widget = AvatarWidget()
+
+        # Add both response and avatar to the layout
+        response_and_avatar_layout.addLayout(response_layout)
+        response_and_avatar_layout.addWidget(self.avatar_widget)
+
+        self.layout.addLayout(response_and_avatar_layout)
 
         # Add emotions display box in the bottom left corner
         emotions_layout = QHBoxLayout()
@@ -102,7 +122,7 @@ class AlterEgo(QMainWindow):
         # Speech Recognition status label
         self.speech_status_label = QLabel("Speech Recognition (F4): OFF")
         self.speech_status_label.setFont(QFont('Courier New', 14))
-        self.speech_status_label.setStyleSheet("color: red;")  # Default to red (OFF)
+        self.speech_status_label.setStyleSheet("color: red;")  # Default to OFF
         self.layout.addWidget(self.speech_status_label)
 
         # Voice Model Selection (properly aligned on the left)
@@ -153,6 +173,9 @@ class AlterEgo(QMainWindow):
         self.fullscreen = False
         self.speech_recognition_worker = None
         self.load_default_character()
+
+        # Adjust avatar size based on initial resolution
+        self.adjust_avatar_size()
 
         # Stylesheet for UI elements
         self.setStyleSheet("""
@@ -222,16 +245,38 @@ class AlterEgo(QMainWindow):
         options = QFileDialog.Options()
         character_data_dir = os.path.join(os.path.dirname(__file__), '../characterdata')
         file_name, _ = QFileDialog.getOpenFileName(self, "Select Character File", character_data_dir, "Character Files (*.chr);;All Files (*)", options=options)
+        
         if file_name:
-            self.character_file = os.path.splitext(os.path.basename(file_name))[0]
+            self.character_file = os.path.splitext(os.path.basename(file_name))[0]  # Get character name from file
             character_path = os.path.join(os.path.dirname(file_name), self.character_file)
+            
             if os.path.exists(f"{character_path}.chr"):
                 with open(f"{character_path}.chr", "r") as file:
                     self.character_data = file.read()
+                
                 self.update_active_character_label()
-            else:
-                self.show_system_message("Character file not found.", "Error")
-                self.active_character_label.setText("Active Character: None")
+
+                # Derive avatar folder from character file name
+                avatar_folder = self.derive_avatar_folder(self.character_file)
+                print(f"Loading avatar folder: {avatar_folder}")  # Debugging: Show the extracted folder name
+                self.avatar_widget.set_character_folder(avatar_folder)
+
+
+    def derive_avatar_folder(self, character_file_name):
+        """Automatically derive the avatar folder from the character's file name."""
+        # Construct the path to the character's avatar folder
+        avatar_folder_path = os.path.join(os.path.dirname(__file__), 'avatar', 'sprites', character_file_name)
+        
+        # Debugging: Print the path being checked
+        print(f"Checking if avatar folder exists: {avatar_folder_path}")
+
+        # Check if the folder exists
+        if os.path.exists(avatar_folder_path):
+            print(f"Character-specific folder found: {character_file_name}")
+            return character_file_name  # Return the character's folder if it exists
+        else:
+            print("Character-specific folder not found, defaulting to 'DEFAULT'")
+            return "DEFAULT"  # Fallback to DEFAULT if the folder doesn't exist
 
     def send_query(self):
         query = self.query_input.toPlainText()
@@ -253,12 +298,20 @@ class AlterEgo(QMainWindow):
         self.response_display.clear()
         self.animation_timer.start(10)
 
-        # Detect emotions from the response and display them in the emotions box
+        # Detect emotions from the response
         emotions = detect_emotions([response])[0]
+        
+        # Find the highest detected emotion
+        highest_emotion = max(emotions, key=emotions.get)
+        
+        # Update the avatar based on the highest emotion
+        self.avatar_widget.load_avatar(highest_emotion)
+        
+        # Display the detected emotions in the emotions display box
         emotions_text = "\n".join([f"{emotion}: {score:.2f}" for emotion, score in emotions.items()])
         self.emotions_display.setText(emotions_text)
 
-        # Generate audio for the response using ElevenLabs
+        # Generate audio for the response (if applicable)
         self.generate_audio_for_response(response)
 
     def update_text_animation(self):
@@ -351,3 +404,16 @@ class AlterEgo(QMainWindow):
             msg_box.setWindowTitle("Information")
         msg_box.setText(message)
         msg_box.exec_()
+
+    def adjust_avatar_size(self):
+        window_size = self.size()  # Get the application window size (NOT THE USER'S MONITOR YOU DUMBSHIT L4W1I3T)
+        if 1080 <= window_size.height() <= 1599:  # From 1080p to 4k
+            self.avatar_widget.adjust_avatar_size(650, 650)
+        elif 1600 <= window_size.height() <= 2160:  # From 2k to 4k
+            self.avatar_widget.adjust_avatar_size(1000, 1000)
+        else:
+            self.avatar_widget.adjust_avatar_size(400, 400)
+
+    def resizeEvent(self, event):
+        self.adjust_avatar_size()
+        super().resizeEvent(event)

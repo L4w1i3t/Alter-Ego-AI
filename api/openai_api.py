@@ -3,6 +3,7 @@ import openai
 import dotenv
 import os
 import json
+from tiktoken import encoding_for_model
 
 # Load environment variables
 dotenv.load_dotenv()
@@ -13,7 +14,7 @@ if not openai_api_key:
 print("OpenAI API Key loaded successfully.")
 client = openai.OpenAI(api_key=openai_api_key)
 
-MODEL = "gpt-4o"
+MODEL = "gpt-4"
 
 # Base directory for character data
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -49,9 +50,14 @@ def update_memory(character_file, memory, new_entry):
     
     save_memory(character_file, memory)
 
+def summarize_memory(memory):
+    # Summarize long-term memory into a single string
+    return f"Summarized interactions: {len(memory['long_term'])} important interactions."
+
 # Function to handle queries with character memory integration
 def get_query(query, character_file, character_data):
     memory = load_memory(character_file)
+    memory_summary = summarize_memory(memory)
     
     # Combine short-term and long-term memory into the conversation context
     # Convert each memory dict to a string
@@ -66,13 +72,18 @@ def get_query(query, character_file, character_data):
         },
         {
             "role": "assistant",
-            "content": f"Memory:\n{memory_context}"  # Include memory in the conversation context
+            "content": f"Memory Summary:\n{memory_summary}"
         },
         {
             "role": "user",
             "content": query
         }
     ]
+
+    enc = encoding_for_model("gpt-4")
+    input_text = "\n".join([message['content'] for message in messages])  # Concatenate all input text
+    token_count = len(enc.encode(input_text))
+    print(f"Tokens used for this query: {token_count}")
     
     # Get response from OpenAI API
     completion = client.chat.completions.create(
