@@ -1,4 +1,0 @@
-Make a diagram outlining the backend structure of this thing
-
-Make the UI look better
-Make a streamlined way of making .chr files
