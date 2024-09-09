@@ -1,6 +1,4 @@
 Make a diagram outlining the backend structure of this thing
 
 Make the UI look better
-Implement a mood detector (HARD)
 Make a streamlined way of making .chr files
-Unfilter the OpenAI API
