@@ -57,7 +57,6 @@ def summarize_memory(memory):
 # Function to handle queries with character memory integration
 def get_query(query, character_file, character_data):
     memory = load_memory(character_file)
-    memory_summary = summarize_memory(memory)
     
     # Combine short-term and long-term memory into the conversation context
     # Convert each memory dict to a string
@@ -72,7 +71,7 @@ def get_query(query, character_file, character_data):
         },
         {
             "role": "assistant",
-            "content": f"Memory Summary:\n{memory_summary}"
+            "content": f"Memory Summary:\n{memory_context}"
         },
         {
             "role": "user",

@@ -55,8 +55,6 @@ WIP
 - ElevenLabs API: https://www.elevenlabs.io
 - Microsoft Azure Speech-to-text API: https://azure.microsoft.com
 - roberta-base go_emotions: https://huggingface.co/SamLowe/roberta-base-go_emotions
-- PyTorch: https://pytorch.org/
-- Python: https://www.python.org/
 
 ---
 
