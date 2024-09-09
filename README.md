@@ -33,7 +33,7 @@ WIP
 
 ## Setup
 
-WIP
+Right now, as the program is still early in development (and by one person, at that), it is not publicly available to use right now unless you want to figure it out yourself.
 
 ---
 
@@ -51,12 +51,17 @@ WIP
 
 ## Credits
 
-WIP
+- OpenAI API: https://openai.com/
+- ElevenLabs API: https://www.elevenlabs.io/
+- Microsoft Azure Speech-to-text API: https://azure.microsoft.com/en-us/services/cognitive-services/s
+- roberta-base go_emotions: https://huggingface.co/SamLowe/roberta-base-go_emotions
+- PyTorch: https://pytorch.org/
+- Python: https://www.python.org/
 
 ---
 
 ## Contact
 
-WIP
+RIght now I don't have any contact information set up.
 
 ---
