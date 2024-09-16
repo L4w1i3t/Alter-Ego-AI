@@ -4,7 +4,7 @@
 
 ---
 
-ALTER EGO is a digital interactive AI interface that allows you to converse and communicate with a replication of any personality you so desire. It seamlessly blends speech recognition, dynamic text and voice generation, and matching avatars to maximize the user experience. This program utilizes OpenAI, ElevenLabs, Microsoft Azure Speech-to-text, and roberta-base go_emotions technologies in order to bring characters and personas to life.
+ALTER EGO is a digital interactive AI interface that allows you to converse and communicate with a replication of any personality you so desire. It seamlessly blends speech recognition, dynamic text and voice generation, and matching avatars to maximize the user experience. This program utilizes OpenAI GPT and Whisper, ElevenLabs, Microsoft Azure Speech-to-Text (Formerly), and roberta-base go_emotions technologies in order to bring characters and personas to life.
 
 ---
 
@@ -52,6 +52,7 @@ WIP
 ## Credits
 
 - OpenAI API: https://openai.com
+- OpenAI Whisper: https://openai.com/index/whisper/
 - ElevenLabs API: https://www.elevenlabs.io
 - Microsoft Azure Speech-to-text API: https://azure.microsoft.com
 - roberta-base go_emotions: https://huggingface.co/SamLowe/roberta-base-go_emotions
