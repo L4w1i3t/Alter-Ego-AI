@@ -1,4 +1,5 @@
 # azure_stt_api.py
+"""THIS API USE IS NOW DEPRECATED FOR THE PROGRAM. ALTER EGO NOW USES OPENAI WHISPER."""
 import os
 import azure.cognitiveservices.speech as speechsdk
 import dotenv

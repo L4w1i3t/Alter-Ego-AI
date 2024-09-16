@@ -18,6 +18,8 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QFont
 from pygame import mixer  # For playing audio
+import datetime
+import traceback
 
 # Import necessary API stuff for the main class
 from api.emotions_api import detect_emotions
@@ -34,6 +36,32 @@ from avatar.avatar import AvatarWidget
 mixer.init()
 
 dotenv.load_dotenv()
+
+def ensure_crash_reports_dir():
+    if not os.path.exists('crash_reports'):
+        os.makedirs('crash_reports')
+
+# Log crashes to a file
+def log_crash(exc_type, exc_value, exc_traceback):
+    ensure_crash_reports_dir()
+    
+    # Create a timestamped file for the crash report
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    crash_file_path = os.path.join('crash_reports', f'crash_report_{timestamp}.txt')
+
+    # Write the crash details into the report
+    with open(crash_file_path, 'w') as f:
+        f.write(f"Crash Report - {datetime.now()}\n")
+        f.write("Type: {}\n".format(exc_type.__name__))
+        f.write("Value: {}\n".format(exc_value))
+        f.write("Traceback:\n")
+        traceback.print_tb(exc_traceback, file=f)
+    
+    # Optionally print the crash info to the console as well
+    print(f"App crashed. Report saved to {crash_file_path}")
+
+# Set up the custom exception hook to log crashes
+sys.excepthook = log_crash
 
 # Main application window
 class AlterEgo(QMainWindow):
@@ -366,6 +394,7 @@ class AlterEgo(QMainWindow):
             self.speech_recognition_worker.stop()
             self.update_speech_status(False)
         else:
+            # Start a new SpeechRecognitionWorker instance using Whisper
             self.speech_recognition_worker = SpeechRecognitionWorker()
             self.speech_recognition_worker.recognized_text.connect(self.handle_speech_input)
             self.speech_recognition_worker.error_occurred.connect(self.display_error)

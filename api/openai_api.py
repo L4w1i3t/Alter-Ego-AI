@@ -14,7 +14,7 @@ if not openai_api_key:
 print("OpenAI API Key loaded successfully.")
 client = openai.OpenAI(api_key=openai_api_key)
 
-MODEL = "gpt-4"
+MODEL = "gpt-4o-2024-08-06"
 
 # Base directory for character data
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))

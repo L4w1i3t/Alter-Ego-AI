@@ -1,10 +1,16 @@
 # workers.py
+import sounddevice as sd
+import numpy as np
+import whisper
 from PyQt5.QtCore import QThread, pyqtSignal
 
-# Necessary API stuff
+# Necessary API functions
 from api.openai_api import get_query
-from api.azure_stt_api import speech_config, speechsdk
 from api.elevenlabs_api import generate_audio
+
+# Load Whisper Model (options: tiny, base, small, medium, large)
+whisper_model = whisper.load_model('base')
+
 
 # Worker Thread to handle the API call
 class QueryWorker(QThread):
@@ -24,6 +30,7 @@ class QueryWorker(QThread):
         except Exception as e:
             self.error_occurred.emit(str(e))
 
+
 # Worker Thread to handle Speech Recognition
 class SpeechRecognitionWorker(QThread):
     recognized_text = pyqtSignal(str)
@@ -31,35 +38,64 @@ class SpeechRecognitionWorker(QThread):
     recognition_stopped = pyqtSignal()
     error_occurred = pyqtSignal(str)
 
-    def __init__(self):
+    def __init__(self, sample_rate=16000, duration=10):
         super().__init__()
-        self.speech_recognizer = speechsdk.SpeechRecognizer(speech_config=speech_config)
-        self._is_running = True
+        self.sample_rate = sample_rate
+        self.duration = duration
 
     def run(self):
         try:
-            self.speech_recognizer.recognized.connect(self.on_recognized)
-            self.speech_recognizer.session_stopped.connect(self.on_session_stopped)
-            self.speech_recognizer.start_continuous_recognition()
             self.recognition_started.emit()
 
-            while self._is_running:
-                pass
+            # Record audio using sounddevice
+            print("Speech Recognition Enabled...")
+            audio_data = self.record_audio()
+
+            # Perform speech recognition using Whisper
+            transcription = self.transcribe_audio_with_whisper(audio_data)
+
+            # Emit the recognized text
+            self.recognized_text.emit(transcription)
+
+            self.recognition_stopped.emit()
 
         except Exception as e:
             self.error_occurred.emit(str(e))
 
+    def record_audio(self):
+        audio_data = sd.rec(
+            int(self.duration * self.sample_rate),
+            samplerate=self.sample_rate,
+            channels=1,
+            dtype='float32'
+        )
+        sd.wait()  # Wait until the recording is finished
+        audio_data = np.squeeze(audio_data)
+
+        # Ensure the audio data is within the valid range [-1.0, 1.0]
+        audio_data = np.clip(audio_data, -1.0, 1.0)
+
+        # Handle any NaN or infinite values
+        audio_data = np.nan_to_num(audio_data, nan=0.0, posinf=1.0, neginf=-1.0)
+
+        return audio_data
+
+    def transcribe_audio_with_whisper(self, audio_data):
+        print("Transcribing audio with Whisper...")
+        # Whisper expects audio data as a NumPy array with dtype float32
+        if audio_data.dtype != np.float32:
+            audio_data = audio_data.astype(np.float32)
+
+        # Perform transcription
+        result = whisper_model.transcribe(audio_data)
+        transcription = result['text']
+        print(f"Recognized: {transcription}")
+        return transcription
+
     def stop(self):
-        self._is_running = False
-        self.speech_recognizer.stop_continuous_recognition()
+        sd.stop()
         self.recognition_stopped.emit()
 
-    def on_recognized(self, evt):
-        if evt.result.reason == speechsdk.ResultReason.RecognizedSpeech:
-            self.recognized_text.emit(evt.result.text)
-
-    def on_session_stopped(self, evt):
-        self.recognition_stopped.emit()
 
 # Worker Thread for generating ElevenLabs audio
 class ElevenLabsAudioWorker(QThread):
