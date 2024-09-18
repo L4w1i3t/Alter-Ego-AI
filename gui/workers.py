@@ -87,7 +87,7 @@ class SpeechRecognitionWorker(QThread):
             audio_data = audio_data.astype(np.float32)
 
         # Perform transcription
-        result = whisper_model.transcribe(audio_data)
+        result = whisper_model.transcribe(audio_data, condition_on_previous_text=False)
         transcription = result['text']
         print(f"Recognized: {transcription}")
         return transcription

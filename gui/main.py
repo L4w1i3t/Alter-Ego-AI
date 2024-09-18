@@ -1,3 +1,4 @@
+# main.py
 import sys
 import os
 import traceback
@@ -24,7 +25,6 @@ def log_crash_report(exc_type, exc_value, exc_traceback):
         file.write("="*60 + "\n")
         file.write("End of crash report\n")
     
-    # Print crash to console (optional)
     traceback.print_exception(exc_type, exc_value, exc_traceback)
 
 # Function to start the application
