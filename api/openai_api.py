@@ -27,11 +27,11 @@ config = configparser.ConfigParser()
 config.read(os.path.join(os.path.dirname(__file__), '../config.ini'))
 
 # Configuration parameters
-MODEL = config.get('OpenAI', 'model', fallback='gpt-4')
+MODEL = config.get('OpenAI', 'model', fallback='gpt-4o')
 SUMMARIZATION_MODEL = config.get('OpenAI', 'summarization_model', fallback='gpt-3.5-turbo')
 EMBEDDING_MODEL = config.get('OpenAI', 'embedding_model', fallback='text-embedding-ada-002')
-MAX_TOKENS_ALLOWED = config.getint('OpenAI', 'max_tokens_allowed', fallback=8000)
-MAX_RESPONSE_TOKENS = config.getint('OpenAI', 'max_response_tokens', fallback=500)
+MAX_TOKENS_ALLOWED = config.getint('OpenAI', 'max_tokens_allowed', fallback=5000)
+MAX_RESPONSE_TOKENS = config.getint('OpenAI', 'max_response_tokens', fallback=100)
 TOP_K = config.getint('Memory', 'top_k', fallback=3)
 MAX_SHORT_TERM_MEMORY = config.getint('Memory', 'max_short_term_memory', fallback=5)
 
@@ -64,11 +64,11 @@ def initialize_database(character_file):
 
 # Function to get embeddings
 def get_embedding(text):
-    response = openai.Embedding.create(
+    response = openai.embeddings.create(
         input=text,
         model=EMBEDDING_MODEL
     )
-    embedding = response['data'][0]['embedding']
+    embedding = response.data[0].embedding
     return embedding
 
 # Function to add memory entry
@@ -127,7 +127,7 @@ def summarize_memory(character_file):
     summary_prompt = f"Summarize the following interactions to help you remember important details for future conversations:\n\n{long_term_text}"
     max_summary_tokens = 150  # Adjust based on your needs
     try:
-        summary_response = openai.ChatCompletion.create(
+        summary_response = openai.chat.completions.create(
             model=SUMMARIZATION_MODEL,
             messages=[{"role": "user", "content": summary_prompt}],
             max_tokens=max_summary_tokens,
@@ -201,7 +201,7 @@ def get_query(query, character_file, character_data):
 
     # Get response from OpenAI API
     try:
-        completion = openai.ChatCompletion.create(
+        completion = openai.chat.completions.create(
             model=MODEL,
             messages=messages,
             max_tokens=MAX_RESPONSE_TOKENS,

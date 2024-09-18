@@ -3,7 +3,7 @@
 import os
 
 # Directory where character memory files are stored
-CHARACTER_DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "characterdata")
+CHARACTER_DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "memory_databases")
 
 # Function to delete all memory JSON files in the characterdata folder
 def clear_memory_files():
@@ -11,7 +11,7 @@ def clear_memory_files():
         # Get a list of all files in the directory
         for file_name in os.listdir(CHARACTER_DATA_DIR):
             # Check if the file is a JSON memory file by ensuring it ends with "_mem.json"
-            if file_name.endswith('_mem.json'):
+            if file_name.endswith('_memory.db'):
                 file_path = os.path.join(CHARACTER_DATA_DIR, file_name)
                 # Remove the file
                 os.remove(file_path)
