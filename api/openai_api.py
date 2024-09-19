@@ -20,7 +20,7 @@ openai_api_key = os.getenv('OPENAI_API_KEY')
 if not openai_api_key:
     exit("No OpenAI API Key found.")
 logging.info("OpenAI API Key loaded successfully.")
-openai.api_key = openai_api_key  # Set the API key
+openai.api_key = openai_api_key
 
 # Load configuration
 config = configparser.ConfigParser()
@@ -30,7 +30,7 @@ config.read(os.path.join(os.path.dirname(__file__), '../config.ini'))
 MODEL = config.get('OpenAI', 'model', fallback='gpt-4o')
 SUMMARIZATION_MODEL = config.get('OpenAI', 'summarization_model', fallback='gpt-3.5-turbo')
 EMBEDDING_MODEL = config.get('OpenAI', 'embedding_model', fallback='text-embedding-ada-002')
-MAX_TOKENS_ALLOWED = config.getint('OpenAI', 'max_tokens_allowed', fallback=5000)
+MAX_TOKENS_ALLOWED = config.getint('OpenAI', 'max_tokens_allowed', fallback=2000)
 MAX_RESPONSE_TOKENS = config.getint('OpenAI', 'max_response_tokens', fallback=100)
 TOP_K = config.getint('Memory', 'top_k', fallback=3)
 MAX_SHORT_TERM_MEMORY = config.getint('Memory', 'max_short_term_memory', fallback=5)
@@ -123,7 +123,7 @@ def summarize_memory(character_file):
     long_term_text = "\n".join(long_term_entries)
     if not long_term_text.strip():
         return "No previous interactions to summarize."
-    # Use OpenAI API to generate a summary
+    # Generate a summary before applying to context
     summary_prompt = f"Summarize the following interactions to help you remember important details for future conversations:\n\n{long_term_text}"
     max_summary_tokens = 150  # Adjust based on your needs
     try:
@@ -178,10 +178,15 @@ def get_query(query, character_file, character_data):
     # Token counting
     enc = encoding_for_model(MODEL)
     total_tokens = sum(len(enc.encode(message['content'])) for message in messages)
+
+    # Print the number of tokens used before sending the API call
+    print(f"Total tokens used before adjustments: {total_tokens}")
+
     max_tokens_allowed = MAX_TOKENS_ALLOWED - MAX_RESPONSE_TOKENS  # Reserve tokens for the response
 
     # If over limit, adjust context
     if total_tokens > max_tokens_allowed:
+        print(f"Token limit exceeded. Total tokens: {total_tokens}, Max allowed: {max_tokens_allowed}")
         # Remove the least relevant memory entries
         logging.warning("Token limit exceeded, adjusting context by removing least relevant memories.")
         while total_tokens > max_tokens_allowed and relevant_memories:
@@ -190,16 +195,27 @@ def get_query(query, character_file, character_data):
             memory_context = "\n".join(memory_entries)
             messages[2]['content'] = f"Relevant Previous Interactions:\n{memory_context}"
             total_tokens = sum(len(enc.encode(message['content'])) for message in messages)
+
+            # Print the number of tokens after removing memories
+            print(f"Tokens after memory adjustment: {total_tokens}")
+
         if total_tokens > max_tokens_allowed:
             # As a last resort, remove the long-term memory summary
             logging.warning("Still over token limit after removing memories, removing long-term memory summary.")
             messages.pop(1)
             total_tokens = sum(len(enc.encode(message['content'])) for message in messages)
+
+            # Print the number of tokens after removing long-term memory summary
+            print(f"Tokens after removing long-term memory summary: {total_tokens}")
+
             if total_tokens > max_tokens_allowed:
                 logging.error("Unable to adjust context within token limits.")
                 return "I'm sorry, but I'm unable to process your request due to context length limitations."
 
-    # Get response from OpenAI API
+    # Print the final token count before making the API call
+    print(f"Final token count before API call: {total_tokens}")
+
+    # Get response
     try:
         completion = openai.chat.completions.create(
             model=MODEL,
@@ -209,6 +225,10 @@ def get_query(query, character_file, character_data):
         )
         response = completion.choices[0].message.content.strip()
         logging.info("Received response from OpenAI API.")
+
+        # Print the number of tokens used in the response
+        response_tokens = len(enc.encode(response))
+        print(f"Tokens used in the response: {response_tokens}")
 
         # Update memory with the new interaction
         new_entry = {
