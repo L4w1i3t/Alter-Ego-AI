@@ -3,6 +3,7 @@ import elevenlabs
 from elevenlabs.client import ElevenLabs
 import os
 import dotenv
+import json
 
 # Load environment variables
 dotenv.load_dotenv()
@@ -17,15 +18,23 @@ client_init = ElevenLabs(
     api_key=api_key,
 )
 
-# Available voice models
-voice_models = {
-    "Yukari Takeba (DEFAULT)": elevenlabs.Voice(voice_id="oFxovaqXut8XX19I4UGi"),
-    "Yukari Takeba (ORIGINAL)": elevenlabs.Voice(voice_id="r9KOIKrF66IfRxj8R8hN"),
-    "My roommate David": elevenlabs.Voice(voice_id="RaLB9SP9w3NGygxqOomT"),
-}
+# Load voice models from JSON file
+VOICE_MODELS_FILE = os.path.join(os.path.dirname(__file__), 'elevenlabs_models.json')
+
+try:
+    with open(VOICE_MODELS_FILE, 'r') as f:
+        voice_models_data = json.load(f)
+        # Convert the JSON data into a dictionary of Voice objects
+        voice_models = {}
+        for model_name, voice_id in voice_models_data.items():
+            voice_models[model_name] = elevenlabs.Voice(voice_id=voice_id)
+except FileNotFoundError:
+    exit(f"Voice models file '{VOICE_MODELS_FILE}' not found.")
+except json.JSONDecodeError as e:
+    exit(f"Error parsing JSON file '{VOICE_MODELS_FILE}': {str(e)}")
 
 # Set a default voice model
-current_voice_model = voice_models["Yukari Takeba (DEFAULT)"]
+current_voice_model = voice_models["Aigis (DEFAULT)"]
 
 def change_voice_model(model_name):
     global current_voice_model

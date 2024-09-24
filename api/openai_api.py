@@ -27,11 +27,24 @@ config = configparser.ConfigParser()
 config.read(os.path.join(os.path.dirname(__file__), '../config.ini'))
 
 # Configuration parameters
+# ------------------------
+# OpenAI models
 MODEL = config.get('OpenAI', 'model', fallback='gpt-4o')
 SUMMARIZATION_MODEL = config.get('OpenAI', 'summarization_model', fallback='gpt-3.5-turbo')
 EMBEDDING_MODEL = config.get('OpenAI', 'embedding_model', fallback='text-embedding-ada-002')
-MAX_TOKENS_ALLOWED = config.getint('OpenAI', 'max_tokens_allowed', fallback=2000)
+
+# Token limits
+# ------------
+# Maximum total tokens allowed for the request (including context and response)
+MAX_TOTAL_TOKENS = config.getint('OpenAI', 'max_total_tokens', fallback=1200)
+
+# Maximum tokens to reserve for the assistant's response
 MAX_RESPONSE_TOKENS = config.getint('OpenAI', 'max_response_tokens', fallback=100)
+
+# Maximum tokens allowed for the context (excluding the response)
+MAX_CONTEXT_TOKENS = MAX_TOTAL_TOKENS - MAX_RESPONSE_TOKENS
+
+# Memory parameters
 TOP_K = config.getint('Memory', 'top_k', fallback=3)
 MAX_SHORT_TERM_MEMORY = config.getint('Memory', 'max_short_term_memory', fallback=5)
 
@@ -125,7 +138,7 @@ def summarize_memory(character_file):
         return "No previous interactions to summarize."
     # Generate a summary before applying to context
     summary_prompt = f"Summarize the following interactions to help you remember important details for future conversations:\n\n{long_term_text}"
-    max_summary_tokens = 150  # Adjust based on your needs
+    max_summary_tokens = 150  # Adjust based on needs
     try:
         summary_response = openai.chat.completions.create(
             model=SUMMARIZATION_MODEL,
@@ -182,14 +195,12 @@ def get_query(query, character_file, character_data):
     # Print the number of tokens used before sending the API call
     print(f"Total tokens used before adjustments: {total_tokens}")
 
-    max_tokens_allowed = MAX_TOKENS_ALLOWED - MAX_RESPONSE_TOKENS  # Reserve tokens for the response
-
-    # If over limit, adjust context
-    if total_tokens > max_tokens_allowed:
-        print(f"Token limit exceeded. Total tokens: {total_tokens}, Max allowed: {max_tokens_allowed}")
+    # Adjust context if total tokens exceed the maximum allowed
+    if total_tokens > MAX_CONTEXT_TOKENS:
+        print(f"Token limit exceeded. Total tokens: {total_tokens}, Max allowed: {MAX_CONTEXT_TOKENS}")
         # Remove the least relevant memory entries
         logging.warning("Token limit exceeded, adjusting context by removing least relevant memories.")
-        while total_tokens > max_tokens_allowed and relevant_memories:
+        while total_tokens > MAX_CONTEXT_TOKENS and relevant_memories:
             relevant_memories.pop()
             memory_entries = [f"User: {entry['query']}\nAssistant: {entry['response']}" for entry in relevant_memories]
             memory_context = "\n".join(memory_entries)
@@ -199,7 +210,7 @@ def get_query(query, character_file, character_data):
             # Print the number of tokens after removing memories
             print(f"Tokens after memory adjustment: {total_tokens}")
 
-        if total_tokens > max_tokens_allowed:
+        if total_tokens > MAX_CONTEXT_TOKENS:
             # As a last resort, remove the long-term memory summary
             logging.warning("Still over token limit after removing memories, removing long-term memory summary.")
             messages.pop(1)
@@ -208,7 +219,7 @@ def get_query(query, character_file, character_data):
             # Print the number of tokens after removing long-term memory summary
             print(f"Tokens after removing long-term memory summary: {total_tokens}")
 
-            if total_tokens > max_tokens_allowed:
+            if total_tokens > MAX_CONTEXT_TOKENS:
                 logging.error("Unable to adjust context within token limits.")
                 return "I'm sorry, but I'm unable to process your request due to context length limitations."
 
