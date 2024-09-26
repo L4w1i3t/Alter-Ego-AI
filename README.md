@@ -13,6 +13,7 @@ ALTER EGO is a digital interactive AI interface that allows you to converse and 
 - [Features](#features)
 - [Setup](#setup)
 - [Usage](#usage)
+- [Known Issues](#known-issues)
 - [Legal](#legal)
 - [Credits](#credits)
 - [Contact](#contact)
@@ -72,7 +73,13 @@ Once you have the system set up, you can start using ALTER EGO as follows:
 
 5. **Continue Interaction**:
    - Engage in an ongoing dialogue.
-   - The AI adapts to the conversation flow and emotional cues.
+   - The program adapts to the conversation flow and emotional cues.
+
+---
+
+## Known Issues
+
+- WORK IN PROGRESS
 
 ---
 
@@ -83,7 +90,6 @@ By using ALTER EGO, you agree to comply with the following:
 - **API Terms of Service**:
   - OpenAI: [Terms](https://openai.com/policies/terms-of-use)
   - ElevenLabs: [Terms](https://elevenlabs.io/terms)
-  - Hugging Face: [Terms](https://huggingface.co/terms)
 
 - **Content Responsibility**:
   - Users are responsible for ensuring that the content generated does not violate any laws or regulations.
@@ -95,7 +101,7 @@ By using ALTER EGO, you agree to comply with the following:
 
 - **Privacy**:
   - Be cautious when sharing personal information.
-  - The developers are not liable for any data breaches or unauthorized access resulting from misuse.
+  - I am not liable for any data breaches or unauthorized access resulting from misuse.
 
 ---
 

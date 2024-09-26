@@ -39,7 +39,7 @@ EMBEDDING_MODEL = config.get('OpenAI', 'embedding_model', fallback='text-embeddi
 MAX_TOTAL_TOKENS = config.getint('OpenAI', 'max_total_tokens', fallback=1200)
 
 # Maximum tokens to reserve for the assistant's response
-MAX_RESPONSE_TOKENS = config.getint('OpenAI', 'max_response_tokens', fallback=100)
+MAX_RESPONSE_TOKENS = config.getint('OpenAI', 'max_response_tokens', fallback=500)
 
 # Maximum tokens allowed for the context (excluding the response)
 MAX_CONTEXT_TOKENS = MAX_TOTAL_TOKENS - MAX_RESPONSE_TOKENS
