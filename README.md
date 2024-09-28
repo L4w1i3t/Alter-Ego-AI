@@ -79,7 +79,11 @@ Once you have the system set up, you can start using ALTER EGO as follows:
 
 ## Known Issues
 
-- WORK IN PROGRESS
+- ALTER EGO will sometimes crash when using speech recognition.
+- The ElevenLabs API can be slow to respond, causing delays in voice synthesis.
+- Chat History is outdated and still needs to be migrated to using the SQLite system.
+
+**If new issues are found, please open an issue on the repository.**
 
 ---
 
@@ -116,6 +120,6 @@ By using ALTER EGO, you agree to comply with the following:
 
 ## Contact
 
-For questions, feedback, or contributions, please open an issue on the GitHub repository. As the project is still under development, direct contact information will be provided in future updates.
+For questions, feedback, or contributions, please open an issue on the repository. As the project is still under development and not publicly available, direct contact information will be provided in future updates.
 
 ---

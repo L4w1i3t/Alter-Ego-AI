@@ -1,9 +1,8 @@
+# openai_api.py
 import openai
 import os
-import json
 import sqlite3
 import pickle
-import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from tiktoken import encoding_for_model
 import configparser
@@ -36,10 +35,10 @@ EMBEDDING_MODEL = config.get('OpenAI', 'embedding_model', fallback='text-embeddi
 # Token limits
 # ------------
 # Maximum total tokens allowed for the request (including context and response)
-MAX_TOTAL_TOKENS = config.getint('OpenAI', 'max_total_tokens', fallback=1200)
+MAX_TOTAL_TOKENS = config.getint('OpenAI', 'max_total_tokens', fallback=1100)
 
 # Maximum tokens to reserve for the assistant's response
-MAX_RESPONSE_TOKENS = config.getint('OpenAI', 'max_response_tokens', fallback=500)
+MAX_RESPONSE_TOKENS = config.getint('OpenAI', 'max_response_tokens', fallback=100)
 
 # Maximum tokens allowed for the context (excluding the response)
 MAX_CONTEXT_TOKENS = MAX_TOTAL_TOKENS - MAX_RESPONSE_TOKENS
@@ -172,7 +171,7 @@ def get_query(query, character_file, character_data):
     messages = [
         {
             "role": "system",
-            "content": character_data
+            "content": f"Your responses fully adhere to the following character information:\n" + character_data
         },
         {
             "role": "system",
@@ -181,6 +180,10 @@ def get_query(query, character_file, character_data):
         {
             "role": "assistant",
             "content": f"Relevant Previous Interactions:\n{memory_context}"
+        },
+        {
+            "role": "system",
+            "content": f"General rule to follow: NEVER end responses with \"How can I assist you?\" or similar."
         },
         {
             "role": "user",

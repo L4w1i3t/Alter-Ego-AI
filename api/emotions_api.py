@@ -88,20 +88,20 @@ sample_texts = [
     "I'm so excited about this new opportunity!",
     "OH MY GOD, WHY THE FUCK WOULD YOU DO THAT?! DO YOU KNOW HOW BADLY YOU SCREWED UP?!",
     "Ewwwwwwwww, that's gross...",
-    # Adding a very long test case
+    # Very long test case
     "This is a really long text. " * 100
 ]
 
 # Get emotions for all tests. Commented out for right now
-emotions_list = detect_emotions(sample_texts)
+#emotions_list = detect_emotions(sample_texts)
 
 # Display the results
-for text, emotions in zip(sample_texts, emotions_list):
-    print(f"Text: \"{text[:50]}...\"")  # Truncate the text display for brevity
-    print("Detected Emotions:")
-    if emotions:
-        for emotion, score in emotions.items():
-            print(f"  {emotion.capitalize():<15}: {score:.2f}")
-    else:
-        print("  No significant emotions detected.")
-    print()
+#for text, emotions in zip(sample_texts, emotions_list):
+ #   print(f"Text: \"{text[:50]}...\"")  # Truncate the text display for brevity
+  #  print("Detected Emotions:")
+   # if emotions:
+    #    for emotion, score in emotions.items():
+     #       print(f"  {emotion.capitalize():<15}: {score:.2f}")
+    #else:
+     #   print("  No significant emotions detected.")
+    #print()
