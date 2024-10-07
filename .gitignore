@@ -2,3 +2,4 @@
 whenbuilding.txt
 venv/
 TODO_LIST.txt
+electron/node_modules/

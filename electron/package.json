@@ -1,0 +1,45 @@
+{
+  "name": "alter-ego-electron",
+  "version": "1.0.0",
+  "description": "ALTER EGO Desktop Application",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "devDependencies": {
+    "electron": "^25.0.0",
+    "electron-builder": "^25.1.7",
+    "electron-is-dev": "^2.0.0"
+  },
+  "dependencies": {
+    "axios": "^1.7.0"
+  },
+  "build": {
+    "appId": "test",
+    "productName": "ALTER EGO",
+    "files": [
+      "renderer/**/*",
+      "main.js",
+      "package.json",
+      "../api/**/*",
+      "../characterdata/**/*",
+      "../memory_databases/**/*",
+      "../scripts/**/*",
+      "../.env",
+      "assets/**/*"
+    ],
+    "directories": {
+      "buildResources": "assets"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  }
+}
