@@ -5,8 +5,8 @@ import whisper
 from PyQt5.QtCore import QThread, pyqtSignal
 
 # Necessary API functions
-from api.openai_api import get_query
-from api.elevenlabs_api import generate_audio
+from model.textgen_gpt import get_query
+from model.elevenlabs_api import generate_audio
 
 # Load Whisper Model (options: tiny, base, small, medium, large)
 whisper_model = whisper.load_model('base')

@@ -2,4 +2,8 @@
 whenbuilding.txt
 venv/
 TODO_LIST.txt
-electron/node_modules/
+gui_electron/node_modules/
+file_tree.txt
+create_tree.exe
+create_tree_and_get_contents.exe
+extras_unused_outdated/

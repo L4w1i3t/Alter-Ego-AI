@@ -23,8 +23,8 @@ import datetime
 import traceback
 
 # Import necessary API stuff for the main class
-from api.emotions_api import detect_emotions
-from api.elevenlabs_api import change_voice_model, voice_models
+from model.emotions import detect_emotions
+from model.elevenlabs_api import change_voice_model, voice_models
 
 # Import the workers and constructors
 from workers import QueryWorker, SpeechRecognitionWorker, ElevenLabsAudioWorker
@@ -192,6 +192,11 @@ class AlterEgo(QMainWindow):
         self.audio_checkbox_action = QAction("Enable ElevenLabs Speech Audio", self, checkable=True)
         self.audio_checkbox_action.setChecked(True)  # Default ON
         self.menu.addAction(self.audio_checkbox_action)
+
+        # Add Software Details to the menu
+        self.software_details_action = QAction("Software Details", self)
+        self.software_details_action.triggered.connect(self.show_software_details)
+        self.menu.addAction(self.software_details_action)
 
         self.character_file = None
         self.character_data = None
@@ -447,3 +452,18 @@ class AlterEgo(QMainWindow):
     def resizeEvent(self, event):
         self.adjust_avatar_size()
         super().resizeEvent(event)
+
+    # Function to show software details
+    def show_software_details(self):
+        software_details = """
+        ALTER EGO Software Details:
+
+        - Text Generation: OpenAI GPT-4 (gpt-4o-2024-08-06)
+        - Summarization Model: OpenAI GPT-4
+        - Embedding Model: text-embedding-ada-002
+        - Voice Generation: ElevenLabs (eleven_multilingual_v2)
+        - Emotion Detection: RoBERTa-based (SamLowe/roberta-base-go_emotions)
+        
+        If you need further technical details, check the documentation.
+        """
+        QMessageBox.information(self, "Software Details", software_details)

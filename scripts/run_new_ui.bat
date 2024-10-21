@@ -1,1 +1,0 @@
-py ../gui/main.py
