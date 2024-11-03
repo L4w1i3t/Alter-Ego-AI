@@ -4,6 +4,8 @@ venv/
 TODO_LIST.txt
 gui_electron/node_modules/
 file_tree.txt
+file_tree_with_code_contents.txt
 create_tree.exe
 create_tree_and_get_contents.exe
 extras_unused_outdated/
+specs.py

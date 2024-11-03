@@ -1,22 +1,22 @@
 # gui.py
+
 import os
 import sys
 # Add the root to sys.path for module imports. Code breaks without this
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-import io
-import dotenv
-import warnings
-warnings.simplefilter(action='ignore', category=FutureWarning)
-warnings.simplefilter(action='ignore', category=UserWarning)  # Pesky little Pydantic warning suppression
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, 
     QPushButton, QTextEdit, QLabel, 
     QFileDialog, QMenuBar, QAction, 
     QMainWindow, QMessageBox, QSpacerItem, 
-    QSizePolicy, QComboBox,
+    QSizePolicy, QComboBox, QDialog, QRadioButton, QButtonGroup
 )
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QFont
+import io
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
+warnings.simplefilter(action='ignore', category=UserWarning)  # Pesky little Pydantic warning suppression
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 from pygame import mixer  # For playing audio
 import datetime
@@ -28,7 +28,7 @@ from model.elevenlabs_api import change_voice_model, voice_models
 
 # Import the workers and constructors
 from workers import QueryWorker, SpeechRecognitionWorker, ElevenLabsAudioWorker
-from construct import ChatHistoryDialog
+from construct import ChatHistoryDialog, SoftwareDetailsDialog
 
 # Import AvatarWidget for the image window
 from avatar.avatar import AvatarWidget
@@ -36,23 +36,70 @@ from avatar.avatar import AvatarWidget
 # Initialize pygame mixer for audio playback
 mixer.init()
 
+import dotenv
 dotenv.load_dotenv()
 
+from model import textgen_gpt, textgen_llama
+
+class ModelSelectionDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Select Text Generation Model")
+        self.setFixedSize(500, 200)
+        layout = QVBoxLayout()
+
+        label = QLabel("Choose a Text Generation Model:")
+        label.setFont(QFont('Courier New', 12))
+        layout.addWidget(label)
+
+        # Radio buttons for selection
+        self.openai_radio = QRadioButton("OpenAI API")
+        self.ollama_radio = QRadioButton("Ollama")
+        self.openai_radio.setChecked(True)  # Default selection
+
+        # Group the radio buttons
+        self.button_group = QButtonGroup()
+        self.button_group.addButton(self.openai_radio)
+        self.button_group.addButton(self.ollama_radio)
+
+        layout.addWidget(self.openai_radio)
+        layout.addWidget(self.ollama_radio)
+
+        # OK and Cancel buttons
+        button_layout = QHBoxLayout()
+        self.ok_button = QPushButton("OK")
+        self.ok_button.clicked.connect(self.accept)
+        self.cancel_button = QPushButton("Cancel")
+        self.cancel_button.clicked.connect(self.reject)
+        button_layout.addWidget(self.ok_button)
+        button_layout.addWidget(self.cancel_button)
+
+        layout.addLayout(button_layout)
+        self.setLayout(layout)
+
+    def get_selection(self):
+        if self.openai_radio.isChecked():
+            return "openai"
+        elif self.ollama_radio.isChecked():
+            return "ollama"
+        else:
+            return None
+
+# Log crashes to a file
 def ensure_crash_reports_dir():
     if not os.path.exists('crash_reports'):
         os.makedirs('crash_reports')
 
-# Log crashes to a file
 def log_crash(exc_type, exc_value, exc_traceback):
     ensure_crash_reports_dir()
     
     # Create a timestamped file for the crash report
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
     crash_file_path = os.path.join('crash_reports', f'crash_report_{timestamp}.txt')
 
     # Write the crash details into the report
     with open(crash_file_path, 'w') as f:
-        f.write(f"Crash Report - {datetime.now()}\n")
+        f.write(f"Crash Report - {datetime.datetime.now()}\n")
         f.write("Type: {}\n".format(exc_type.__name__))
         f.write("Value: {}\n".format(exc_value))
         f.write("Traceback:\n")
@@ -74,6 +121,10 @@ class AlterEgo(QMainWindow):
         central_widget = QWidget(self)
         self.setCentralWidget(central_widget)
         self.layout = QVBoxLayout()
+
+        # Initialize model selection
+        self.text_generation_model = None
+        self.initialize_model_selection()
 
         # Character loading and active character display
         button_and_label_layout = QVBoxLayout()
@@ -195,7 +246,7 @@ class AlterEgo(QMainWindow):
 
         # Add Software Details to the menu
         self.software_details_action = QAction("Software Details", self)
-        self.software_details_action.triggered.connect(self.show_software_details)
+        self.software_details_action.triggered.connect(self.open_software_details)
         self.menu.addAction(self.software_details_action)
 
         self.character_file = None
@@ -206,7 +257,6 @@ class AlterEgo(QMainWindow):
         self.current_text_index = 0
         self.fullscreen = False
         self.speech_recognition_worker = None
-        self.load_default_character()
 
         # Adjust avatar size based on initial resolution
         self.adjust_avatar_size()
@@ -260,6 +310,21 @@ class AlterEgo(QMainWindow):
             }
         """)
 
+        # Attempt to load DEFAULT.chr
+        self.load_default_character()
+
+    def initialize_model_selection(self):
+        dialog = ModelSelectionDialog(self)
+        if dialog.exec_() == QDialog.Accepted:
+            self.text_generation_model = dialog.get_selection()
+            print(f"Selected text generation model: {self.text_generation_model}")
+            if self.text_generation_model == "ollama":
+                # Start Ollama server
+                textgen_llama.start_ollama_server()
+        else:
+            # User canceled the selection, exit the application
+            sys.exit()
+
     def load_default_character(self):
         default_character_file = "DEFAULT"
         character_path = os.path.join(os.path.dirname(__file__), '../characterdata', f"{default_character_file}.chr")
@@ -268,9 +333,20 @@ class AlterEgo(QMainWindow):
                 self.character_file = default_character_file
                 self.character_data = file.read()
                 self.update_active_character_label()
+                
+                # Derive avatar folder from character file name
+                avatar_folder = self.derive_avatar_folder(self.character_file)
+                print(f"Loading avatar folder: {avatar_folder}")  # Debugging: Show the extracted folder name
+                self.avatar_widget.set_character_folder(avatar_folder)
+                
+                # Enable query inputs and speech recognition
+                self.enable_query_features()
         else:
-            self.show_system_message("Default character file not found.", "Error")
+            self.character_file = None
+            self.character_data = None
             self.active_character_label.setText("Active Character: None")
+            self.disable_query_features()
+            self.show_system_message("DEFAULT character not found. Please load a character to begin.", "Warning")
 
     def update_active_character_label(self):
         self.active_character_label.setText(f"Active Character: {self.character_file}")
@@ -285,16 +361,24 @@ class AlterEgo(QMainWindow):
             character_path = os.path.join(os.path.dirname(file_name), self.character_file)
             
             if os.path.exists(f"{character_path}.chr"):
-                with open(f"{character_path}.chr", "r") as file:
+                with open(f"{character_path}.chr", "r", encoding="utf-8") as file:
                     self.character_data = file.read()
                 
                 self.update_active_character_label()
-
+            
                 # Derive avatar folder from character file name
                 avatar_folder = self.derive_avatar_folder(self.character_file)
                 print(f"Loading avatar folder: {avatar_folder}")  # Debugging: Show the extracted folder name
                 self.avatar_widget.set_character_folder(avatar_folder)
-
+                
+                # Enable query inputs and speech recognition
+                self.enable_query_features()
+            else:
+                self.show_system_message("Selected character file is invalid.", "Error")
+                self.active_character_label.setText("Active Character: None")
+                self.character_file = None
+                self.character_data = None
+                self.disable_query_features()
 
     def derive_avatar_folder(self, character_file_name):
         """Automatically derive the avatar folder from the character's file name."""
@@ -321,7 +405,7 @@ class AlterEgo(QMainWindow):
         self.query_input.clear()
 
         # Create a new worker thread for the query
-        self.worker = QueryWorker(query, self.character_file, self.character_data)
+        self.worker = QueryWorker(query, self.character_file, self.character_data, self.text_generation_model)
         self.worker.result_ready.connect(self.display_response_animated) 
         self.worker.error_occurred.connect(self.display_error)
         self.worker.start()
@@ -334,13 +418,13 @@ class AlterEgo(QMainWindow):
 
         # Detect emotions from the response
         emotions = detect_emotions([response])[0]
-        
+
         # Find the highest detected emotion
         highest_emotion = max(emotions, key=emotions.get)
-        
+
         # Update the avatar based on the highest emotion
         self.avatar_widget.load_avatar(highest_emotion)
-        
+
         # Display the detected emotions in the emotions display box
         emotions_text = "\n".join([f"{emotion}: {score:.2f}" for emotion, score in emotions.items()])
         self.emotions_display.setText(emotions_text)
@@ -378,7 +462,7 @@ class AlterEgo(QMainWindow):
         if not self.character_file:
             self.show_system_message("No character loaded. Please load a character first.", "Warning")
             return
-        chat_history_dialog = ChatHistoryDialog(self.character_file)
+        chat_history_dialog = ChatHistoryDialog(self.character_file, self.text_generation_model)
         chat_history_dialog.exec_()
 
     def toggle_fullscreen(self):
@@ -398,15 +482,20 @@ class AlterEgo(QMainWindow):
     def toggle_speech_recognition(self):
         if self.speech_recognition_worker and self.speech_recognition_worker.isRunning():
             self.speech_recognition_worker.stop()
-            self.update_speech_status(False)
+            self.speech_recognition_worker.finished.connect(self.cleanup_speech_worker)
         else:
-            # Start a new SpeechRecognitionWorker instance using Whisper
             self.speech_recognition_worker = SpeechRecognitionWorker()
             self.speech_recognition_worker.recognized_text.connect(self.handle_speech_input)
             self.speech_recognition_worker.error_occurred.connect(self.display_error)
             self.speech_recognition_worker.recognition_started.connect(lambda: self.update_speech_status(True))
             self.speech_recognition_worker.recognition_stopped.connect(lambda: self.update_speech_status(False))
+            self.speech_recognition_worker.finished.connect(self.cleanup_speech_worker)
             self.speech_recognition_worker.start()
+
+    def cleanup_speech_worker(self):
+        if self.speech_recognition_worker:
+            self.speech_recognition_worker.deleteLater()
+            self.speech_recognition_worker = None
 
     def handle_speech_input(self, text):
         self.query_input.setPlainText(text)
@@ -441,7 +530,7 @@ class AlterEgo(QMainWindow):
         msg_box.exec_()
 
     def adjust_avatar_size(self):
-        window_size = self.size()  # Get the application window size (NOT THE USER'S MONITOR YOU DUMBSHIT L4W1I3T)
+        window_size = self.size()  # Get the application window size
         if 1080 <= window_size.height() <= 1599:  # From 1080p to 4k
             self.avatar_widget.adjust_avatar_size(650, 650)
         elif 1600 <= window_size.height() <= 2160:  # From 2k to 4k
@@ -454,16 +543,38 @@ class AlterEgo(QMainWindow):
         super().resizeEvent(event)
 
     # Function to show software details
-    def show_software_details(self):
-        software_details = """
-        ALTER EGO Software Details:
+    def open_software_details(self):
+        dialog = SoftwareDetailsDialog(self)
+        dialog.exec_()
 
-        - Text Generation: OpenAI GPT-4 (gpt-4o-2024-08-06)
-        - Summarization Model: OpenAI GPT-4
-        - Embedding Model: text-embedding-ada-002
-        - Voice Generation: ElevenLabs (eleven_multilingual_v2)
-        - Emotion Detection: RoBERTa-based (SamLowe/roberta-base-go_emotions)
-        
-        If you need further technical details, check the documentation.
-        """
-        QMessageBox.information(self, "Software Details", software_details)
+    # Override closeEvent to ensure Ollama server is closed if running
+    def closeEvent(self, event):
+        if self.text_generation_model == "ollama":
+            try:
+                textgen_llama.stop_ollama_server()
+            except Exception as e:
+                print(f"Error stopping Ollama server: {e}")
+        event.accept()
+
+    def enable_query_features(self):
+        """Enable query input and speech recognition features."""
+        self.query_input.setEnabled(True)
+        self.send_button.setEnabled(True)
+        self.speech_status_label.setEnabled(True)
+        self.menu.setEnabled(True)
+        self.voice_model_combo.setEnabled(True)
+        # Optionally, display a message to the user. Commented out right now because it happens upon EVERY character load
+        # self.show_system_message("Character loaded successfully. You can now enter queries and enable speech recognition.", "Information")
+
+    def disable_query_features(self):
+        """Disable query input and speech recognition features."""
+        self.query_input.setEnabled(False)
+        self.send_button.setEnabled(False)
+        self.speech_status_label.setEnabled(False)
+        self.menu.setEnabled(False)
+        self.voice_model_combo.setEnabled(False)
+
+        # Disable speech recognition if it's running
+        if self.speech_recognition_worker and self.speech_recognition_worker.isRunning():
+            self.speech_recognition_worker.stop()
+            self.speech_recognition_worker.finished.connect(self.cleanup_speech_worker)

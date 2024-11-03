@@ -1,0 +1,10 @@
+Crash Report - 2024-11-03 17:21:21.413217
+Type: UnicodeDecodeError
+Value: 'charmap' codec can't decode byte 0x9d in position 440: character maps to <undefined>
+Traceback:
+  File "C:\Users\Charles\Desktop\Coding Projects\AI\Alter Ego\src\gui\gui.py", line 365, in load_character
+    self.character_data = file.read()
+                          ^^^^^^^^^^^
+  File "C:\Users\Charles\AppData\Local\Programs\Python\Python312\Lib\encodings\cp1252.py", line 23, in decode
+    return codecs.charmap_decode(input,self.errors,decoding_table)[0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

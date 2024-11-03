@@ -1,0 +1,10 @@
+Crash Report - 2024-11-03 16:23:14.978901
+Type: UnboundLocalError
+Value: cannot access local variable 'header_label' where it is not associated with a value
+Traceback:
+  File "C:\Users\Charles\Desktop\Coding Projects\AI\Alter Ego\src\gui\gui.py", line 464, in open_chat_history
+    chat_history_dialog = ChatHistoryDialog(self.character_file, self.text_generation_model)
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Charles\Desktop\Coding Projects\AI\Alter Ego\src\gui\construct.py", line 20, in __init__
+    header_label.setStyleSheet("""
+    ^^^^^^^^^^^^

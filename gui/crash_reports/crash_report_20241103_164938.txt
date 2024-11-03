@@ -1,0 +1,12 @@
+Crash Report - 2024-11-03 16:49:38.623679
+Type: AttributeError
+Value: type object 'QPushButton' has no attribute 'Expanding'
+Traceback:
+  File "C:\Users\Charles\Desktop\Coding Projects\AI\Alter Ego\src\gui\gui.py", line 547, in show_software_details
+    software_details_dialog = SoftwareDetailsDialog(self)
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Charles\Desktop\Coding Projects\AI\Alter Ego\src\gui\construct.py", line 126, in __init__
+    self.setup_ui()
+  File "C:\Users\Charles\Desktop\Coding Projects\AI\Alter Ego\src\gui\construct.py", line 197, in setup_ui
+    spacer.setSizePolicy(QPushButton.Expanding, QPushButton.Expanding)
+                         ^^^^^^^^^^^^^^^^^^^^^

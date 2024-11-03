@@ -4,11 +4,6 @@ from PyQt5.QtWidgets import QLabel
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtCore import Qt
 
-import os
-from PyQt5.QtWidgets import QLabel
-from PyQt5.QtGui import QPixmap
-from PyQt5.QtCore import Qt
-
 class AvatarWidget(QLabel):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -52,4 +47,4 @@ class AvatarWidget(QLabel):
         """Adjust avatar size based on the resolution of the application."""
         self.setFixedSize(width, height)
         if self.character_folder:
-            self.load_avatar("neutral")  # Re-load avatar only if the character folder is set
+            self.load_avatar("neutral")  # Reload avatar only if the character folder is set
