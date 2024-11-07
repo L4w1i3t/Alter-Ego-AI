@@ -1,4 +1,5 @@
 # workers.py
+
 import sounddevice as sd
 import numpy as np
 import whisper
@@ -11,14 +12,17 @@ from model.textgen_llama import get_query as get_query_llama
 from model.elevenlabs_api import generate_audio
 
 # Load Whisper Model (options: tiny, base, small, medium, large)
-whisper_model = whisper.load_model('tiny')
+whisper_model = whisper.load_model("tiny")
+
 
 # Worker Thread to handle the API call
 class QueryWorker(QThread):
     result_ready = pyqtSignal(str)
     error_occurred = pyqtSignal(str)
 
-    def __init__(self, query, character_file, character_data, text_generation_model='openai'):
+    def __init__(
+        self, query, character_file, character_data, text_generation_model="openai"
+    ):
         super().__init__()
         self.query = query
         self.character_file = character_file
@@ -27,12 +31,24 @@ class QueryWorker(QThread):
 
     def run(self):
         try:
-            if self.text_generation_model == 'openai':
-                response = get_query_gpt(self.query, self.character_file, self.character_data, model_name='gpt')
-            elif self.text_generation_model == 'ollama':
-                response = get_query_llama(self.query, self.character_file, self.character_data, model_name='ollama')
+            if self.text_generation_model == "openai":
+                response = get_query_gpt(
+                    self.query,
+                    self.character_file,
+                    self.character_data,
+                    model_name="gpt",
+                )
+            elif self.text_generation_model == "ollama":
+                response = get_query_llama(
+                    self.query,
+                    self.character_file,
+                    self.character_data,
+                    model_name="ollama",
+                )
             else:
-                raise ValueError(f"Unknown text generation model: {self.text_generation_model}")
+                raise ValueError(
+                    f"Unknown text generation model: {self.text_generation_model}"
+                )
             self.result_ready.emit(response)
         except Exception as e:
             self.error_occurred.emit(str(e))
@@ -78,7 +94,7 @@ class SpeechRecognitionWorker(QThread):
                 int(self.duration * self.sample_rate),
                 samplerate=self.sample_rate,
                 channels=1,
-                dtype='float32'
+                dtype="float32",
             )
             sd.wait()
             audio_data = np.squeeze(audio_data)
@@ -96,7 +112,7 @@ class SpeechRecognitionWorker(QThread):
             audio_data = audio_data.astype(np.float32)
 
         result = whisper_model.transcribe(audio_data)
-        transcription = result['text']
+        transcription = result["text"]
         print(f"Recognized: {transcription}")
         return transcription
 
