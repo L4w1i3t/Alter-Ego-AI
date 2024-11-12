@@ -214,7 +214,7 @@ def get_query(query, character_file, character_data, model_name="gpt"):
         },
         {
             "role": "system",
-            "content": 'General rules to follow: NEVER end responses with "How can I assist you?" or similar, you are not to roleplay in responses. Avoid using expressive actions such as *sigh* or *wipes brow*, as you are intended for conversational exchanges rather than roleplay.',
+            "content": 'General rules to follow: NEVER end responses with "How can I assist you?" or similar. You are not to roleplay in responses; Do not under any circumstance use expressive actions such as *sigh* or *wipes brow*, as you are intended for conversational exchanges rather than roleplay.',
         },
         {"role": "user", "content": query},
     ]

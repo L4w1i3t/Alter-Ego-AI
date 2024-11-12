@@ -33,7 +33,7 @@ class APIKeyManager:
                 raise ValueError(f"Unknown service: {service}")
             
             env_key = key_mapping[service]
-            set_key(self.dotenv_path, env_key, new_key, quote_mode='never')  # Prevent quotes
+            set_key(self.dotenv_path, env_key, new_key, quote_mode='never')
             os.environ[env_key] = new_key
             logging.info(f"Successfully updated API key for {service}")
             return True
@@ -52,7 +52,7 @@ class APIKeyManager:
                 raise ValueError(f"Unknown service: {service}")
             
             env_key = key_mapping[service]
-            set_key(self.dotenv_path, env_key, '', quote_mode='never')  # Prevent quotes
+            set_key(self.dotenv_path, env_key, '', quote_mode='never')
             os.environ[env_key] = ''
             logging.info(f"Successfully removed API key for {service}")
             return True

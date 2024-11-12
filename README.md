@@ -4,9 +4,9 @@
 
 ---
 
-ALTER EGO is a digital interactive AI interface that allows you to converse and communicate with a replication of any personality you so desire. It seamlessly blends speech recognition, dynamic text and voice generation, and matching avatars to maximize the user experience. This program utilizes OpenAI GPT and Whisper, ElevenLabs, and roberta-base go_emotions technologies in order to bring characters and personas to life.
+ALTER EGO is a digital interactive AI interface that allows you to converse and communicate with a replication of any personality you so desire. It blends speech recognition, dynamic text and voice generation, and matching avatars to maximize the user experience. This program utilizes OpenAI GPT and Whisper, Ollama, ElevenLabs, and roberta-base go_emotions technologies in order to bring characters and personas to life.
 
-***CURRENT VERSION: 2.5-beta***
+***CURRENT VERSION: Pre-alpha***
 
 ---
 
@@ -24,13 +24,17 @@ ALTER EGO is a digital interactive AI interface that allows you to converse and 
 
 ## About ALTER EGO
 
-ALTER EGO is an AI platform that transforms the way you interact with digital personas. By harnessing cutting-edge technologies in natural language processing and speech recognition, it enables you to have immersive conversations with any personality—be it historical figures, fictional characters, or entirely original creations. The integration of dynamic avatars and realistic voice synthesis brings these personas to life, offering an unparalleled user experience.
+ALTER EGO is an AI platform that transforms the way you interact with digital personas. By harnessing cutting-edge technologies in natural language processing and speech recognition, it enables you to have immersive conversations with any personality—be it historical figures, fictional characters, or entirely original creations.
 
 ---
 
 ## Features
 
 - **Customizable Personalities**: Create and interact with AI-driven personalities that mimic the speech patterns, knowledge, and behaviors of any character you choose. Results may vary.
+
+- **Language Model Selection**: Be able to chose which language models to use in your interactions on startup, between OpenAI and Ollama. The former requires
+an API key and costs on a per-token basis, but is noticeable more robust. The latter is open-source and zero-cost, but requires external setup and is
+more limited in its responses.
 
 - **Advanced Speech Recognition**: Utilize OpenAI Whisper for accurate and real-time voice input processing.
 
@@ -46,11 +50,15 @@ ALTER EGO is an AI platform that transforms the way you interact with digital pe
 
 ## Setup
 
-Currently, ALTER EGO is in the early stages of development and is not publicly available for general use. If you're interested in exploring the project or contributing to its development, you are welcome to clone the repository and set it up yourself. Please note that this requires:
+Currently, ALTER EGO is in the early stages of development and is not publicly available for general use. If you're interested in exploring the project or contributing to its development, you are welcome to clone the repository and set it up yourself. Please note that this program requires:
 
-- **Technical Expertise**: Familiarity with Python, AI models, and API integrations.
+- **Technical Expertise**: Familiarity with Python, language models, and API integrations.
 - **API Access**: Valid API keys for OpenAI and ElevenLabs.
+- **An Ollama Distribution**: Have Ollama correctly set up on your system.
 - **Hardware Requirements**: A capable system that can handle the computational load, preferably with GPU support. A full breakdown of recommended hardware will come in a future update after significant testing.
+
+Please note that for language models, you will absolutely need the setup for either OpenAI or Ollama to use the program. The API keys are not required to
+run the program, but they are needed to run their respective services.
 
 ---
 
@@ -69,7 +77,7 @@ Once you have the system set up, you can start using ALTER EGO as follows:
    - Type your message for the program to respond.
 
 4. **Receive Responses**:
-   - ALTER EGO generates a context-aware response using OpenAI GPT.
+   - ALTER EGO generates a context-aware response using a language model.
    - The response is vocalized through ElevenLabs' voice synthesis.
    - An avatar displays appropriate expressions based on the emotional context.
 
@@ -83,7 +91,8 @@ Once you have the system set up, you can start using ALTER EGO as follows:
 
 - ALTER EGO will sometimes crash when using speech recognition.
 - The ElevenLabs API can be slow to respond, causing delays in voice synthesis.
-- Chat History is outdated and still needs to be migrated to using the SQLite system.
+- Chat History does not function when using OpenAI.
+- Error text appears if ElevenLabs audio is enabled but there are no voice models. Happens on startup.
 
 **If new issues are found, please open an issue on the repository.**
 
@@ -115,6 +124,7 @@ By using ALTER EGO, you agree to comply with the following:
 
 - **OpenAI API**: https://openai.com
 - **OpenAI Whisper**: https://openai.com/whisper
+- **Ollama**: https://github.com/ollama/ollama?tab=readme-ov-file
 - **ElevenLabs API**: https://www.elevenlabs.io
 - **roberta-base go_emotions**: https://huggingface.co/SamLowe/roberta-base-go_emotions
 

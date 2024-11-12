@@ -176,9 +176,10 @@ def get_query(query, character_file, character_data, model_name="ollama"):
 
     # Prepare messages
     messages = (
-        f"Character information:\n{character_data}\n\n"
+        f"You must adhere to the following character information:\n{character_data}\n\n"
         f"Past Interactions:\n{memory_context}\n\n"
-        f"**Note**: You are not to roleplay in responses. Avoid using expressive actions such as *sigh* or *wipes brow*, as you are intended for conversational exchanges rather than roleplay."
+        f"Note: You should not respond with \"How may I assist you?\" or similar unless contextually appropriate.\n\n"
+        f"Note: You are not to roleplay in responses. Do not under any circumstances use expressive actions such as *sigh* or *wipes brow*, as you are intended for conversational exchanges rather than roleplay.\n\n"
         f"User: {query}"
     )
 
