@@ -17,7 +17,9 @@ api_key = os.getenv("ELEVENLABS_API_KEY")
 if api_key:
     logging.info("ElevenLabs API Key found and loaded successfully.")
 else:
-    logging.warning("ElevenLabs API Key not found. Please configure in settings to use ElevenLabs services.")
+    logging.warning(
+        "ElevenLabs API Key not found. Please configure in settings to use ElevenLabs services."
+    )
 
 # Initialize ElevenLabs client
 client_init = ElevenLabs(api_key=api_key)

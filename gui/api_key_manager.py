@@ -5,19 +5,17 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 
+
 class APIKeyManager:
     def __init__(self):
         self.dotenv_path = find_dotenv()
         if not self.dotenv_path:
-            self.dotenv_path = '.env'
+            self.dotenv_path = ".env"
         load_dotenv(self.dotenv_path)
 
     def get_api_key(self, service):
         """Get the current API key for a service."""
-        key_mapping = {
-            'openai': 'OPENAI_API_KEY',
-            'elevenlabs': 'ELEVENLABS_API_KEY'
-        }
+        key_mapping = {"openai": "OPENAI_API_KEY", "elevenlabs": "ELEVENLABS_API_KEY"}
         if service not in key_mapping:
             raise ValueError(f"Unknown service: {service}")
         return os.getenv(key_mapping[service])
@@ -26,14 +24,14 @@ class APIKeyManager:
         """Update or add an API key for a service."""
         try:
             key_mapping = {
-                'openai': 'OPENAI_API_KEY',
-                'elevenlabs': 'ELEVENLABS_API_KEY'
+                "openai": "OPENAI_API_KEY",
+                "elevenlabs": "ELEVENLABS_API_KEY",
             }
             if service not in key_mapping:
                 raise ValueError(f"Unknown service: {service}")
-            
+
             env_key = key_mapping[service]
-            set_key(self.dotenv_path, env_key, new_key, quote_mode='never')
+            set_key(self.dotenv_path, env_key, new_key, quote_mode="never")
             os.environ[env_key] = new_key
             logging.info(f"Successfully updated API key for {service}")
             return True
@@ -45,15 +43,15 @@ class APIKeyManager:
         """Remove an API key for a service."""
         try:
             key_mapping = {
-                'openai': 'OPENAI_API_KEY',
-                'elevenlabs': 'ELEVENLABS_API_KEY'
+                "openai": "OPENAI_API_KEY",
+                "elevenlabs": "ELEVENLABS_API_KEY",
             }
             if service not in key_mapping:
                 raise ValueError(f"Unknown service: {service}")
-            
+
             env_key = key_mapping[service]
-            set_key(self.dotenv_path, env_key, '', quote_mode='never')
-            os.environ[env_key] = ''
+            set_key(self.dotenv_path, env_key, "", quote_mode="never")
+            os.environ[env_key] = ""
             logging.info(f"Successfully removed API key for {service}")
             return True
         except Exception as e:

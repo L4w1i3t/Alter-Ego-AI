@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./logo.png" alt="Placeholder Logo" title="Placeholder Logo" />
+  <img src="static/assets/logo.png" alt="Placeholder Logo" title="Placeholder Logo" />
 </div>
 
 ---

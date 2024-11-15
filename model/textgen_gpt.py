@@ -19,7 +19,9 @@ openai_api_key = os.getenv("OPENAI_API_KEY")
 if openai_api_key:
     logging.info("OpenAI API Key found and loaded successfully.")
 else:
-    logging.warning("OpenAI API Key not found. Please configure in settings to use OpenAI services.")
+    logging.warning(
+        "OpenAI API Key not found. Please configure in settings to use OpenAI services."
+    )
 openai.api_key = openai_api_key
 
 # Configuration parameters

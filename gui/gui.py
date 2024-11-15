@@ -27,7 +27,8 @@ from PyQt5.QtWidgets import (
     QCheckBox,
     QListWidget,
     QLineEdit,
-    QInputDialog
+    QInputDialog,
+    QWidgetItem,
 )
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QFont
@@ -63,6 +64,7 @@ from workers import QueryWorker, SpeechRecognitionWorker, ElevenLabsAudioWorker
 from construct import ChatHistoryDialog, SoftwareDetailsDialog
 from avatar.avatar import AvatarWidget
 from api_key_manager import APIKeyManager
+from character_manager import CharacterManager
 
 # Initialize pygame mixer for audio playback
 mixer.init()
@@ -73,6 +75,7 @@ dotenv.load_dotenv()
 
 from model import textgen_gpt, textgen_llama
 
+
 class APIKeyManagerDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -82,10 +85,7 @@ class APIKeyManagerDialog(QDialog):
         layout = QVBoxLayout()
 
         # Define the services and their corresponding environment variable keys
-        self.services = {
-            'OpenAI': 'openai',
-            'ElevenLabs': 'elevenlabs'
-        }
+        self.services = {"OpenAI": "openai", "ElevenLabs": "elevenlabs"}
 
         self.service_widgets = {}
 
@@ -98,17 +98,19 @@ class APIKeyManagerDialog(QDialog):
             key_display.setReadOnly(True)
             edit_button = QPushButton("Edit")
             remove_button = QPushButton("Remove")
-            
+
             # Connect buttons with corresponding methods
             edit_button.clicked.connect(lambda checked, s=service_key: self.edit_key(s))
-            remove_button.clicked.connect(lambda checked, s=service_key: self.remove_key(s))
-            
+            remove_button.clicked.connect(
+                lambda checked, s=service_key: self.remove_key(s)
+            )
+
             service_layout.addWidget(label)
             service_layout.addWidget(key_display)
             service_layout.addWidget(edit_button)
             service_layout.addWidget(remove_button)
             layout.addLayout(service_layout)
-            
+
             self.service_widgets[service_key] = key_display
 
         # Add Close button
@@ -119,29 +121,44 @@ class APIKeyManagerDialog(QDialog):
         self.setLayout(layout)
 
     def edit_key(self, service):
-        new_key, ok = QInputDialog.getText(self, f"Edit {service.capitalize()} API Key", "Enter new API key:")
+        new_key, ok = QInputDialog.getText(
+            self, f"Edit {service.capitalize()} API Key", "Enter new API key:"
+        )
         if ok and new_key:
             success = self.api_manager.update_api_key(service, new_key)
             if success:
                 self.service_widgets[service].setText(new_key)
-                QMessageBox.information(self, "Success", f"{service.capitalize()} API key updated successfully.")
+                QMessageBox.information(
+                    self,
+                    "Success",
+                    f"{service.capitalize()} API key updated successfully.",
+                )
             else:
-                QMessageBox.warning(self, "Error", f"Failed to update {service.capitalize()} API key.")
+                QMessageBox.warning(
+                    self, "Error", f"Failed to update {service.capitalize()} API key."
+                )
 
     def remove_key(self, service):
         confirm = QMessageBox.question(
             self,
             "Confirm Remove",
             f"Are you sure you want to remove the {service.capitalize()} API key?",
-            QMessageBox.Yes | QMessageBox.No
+            QMessageBox.Yes | QMessageBox.No,
         )
         if confirm == QMessageBox.Yes:
             success = self.api_manager.remove_api_key(service)
             if success:
                 self.service_widgets[service].setText("")
-                QMessageBox.information(self, "Success", f"{service.capitalize()} API key removed successfully.")
+                QMessageBox.information(
+                    self,
+                    "Success",
+                    f"{service.capitalize()} API key removed successfully.",
+                )
             else:
-                QMessageBox.warning(self, "Error", f"Failed to remove {service.capitalize()} API key.")
+                QMessageBox.warning(
+                    self, "Error", f"Failed to remove {service.capitalize()} API key."
+                )
+
 
 class QueryTextEdit(QTextEdit):
     enterPressed = pyqtSignal()  # Custom signal for Enter key
@@ -203,6 +220,202 @@ class ModelSelectionDialog(QDialog):
             return "ollama"
         else:
             return None
+
+
+class CharacterManagerDialog(QDialog):
+    def __init__(self, parent=None, character_manager=None):
+        super().__init__(parent)
+        self.setWindowTitle("Manage Characters")
+        self.setFixedSize(600, 400)
+        self.character_manager = character_manager
+
+        # Main layout
+        main_layout = QVBoxLayout()
+
+        # Character List
+        self.character_list = QListWidget()
+        self.load_characters()
+        main_layout.addWidget(self.character_list)
+
+        # Buttons Layout
+        buttons_layout = QHBoxLayout()
+
+        self.add_button = QPushButton("Add")
+        self.add_button.clicked.connect(self.add_character)
+        buttons_layout.addWidget(self.add_button)
+
+        self.edit_button = QPushButton("Edit")
+        self.edit_button.clicked.connect(self.edit_character)
+        buttons_layout.addWidget(self.edit_button)
+
+        self.duplicate_button = QPushButton("Duplicate")
+        self.duplicate_button.clicked.connect(self.duplicate_character)
+        buttons_layout.addWidget(self.duplicate_button)
+
+        self.delete_button = QPushButton("Delete")
+        self.delete_button.clicked.connect(self.delete_character)
+        buttons_layout.addWidget(self.delete_button)
+
+        main_layout.addLayout(buttons_layout)
+
+        # Close Button
+        close_button_layout = QHBoxLayout()
+        close_button_layout.addStretch()
+        self.close_button = QPushButton("Close")
+        self.close_button.clicked.connect(self.accept)
+        close_button_layout.addWidget(self.close_button)
+        main_layout.addLayout(close_button_layout)
+
+        self.setLayout(main_layout)
+
+    def load_characters(self):
+        """Load characters into the list widget."""
+        self.character_list.clear()
+        characters = self.character_manager.list_characters()
+        self.character_list.addItems(characters)
+
+    def add_character(self):
+        """Add a new character."""
+        name, ok = QInputDialog.getText(self, "Add Character", "Enter character name:")
+        if ok and name:
+            if self.character_manager.character_exists(name):
+                QMessageBox.warning(
+                    self, "Error", f"Character '{name}' already exists."
+                )
+                return
+            content, ok = QInputDialog.getMultiLineText(
+                self, "Add Character", "Enter character content:"
+            )
+            if ok:
+                try:
+                    self.character_manager.add_character(name, content)
+                    self.load_characters()
+                    QMessageBox.information(
+                        self, "Success", f"Character '{name}' added successfully."
+                    )
+                except Exception as e:
+                    QMessageBox.critical(self, "Error", str(e))
+
+    def edit_character(self):
+        """Edit the selected character."""
+        selected_item = self.character_list.currentItem()
+        if not selected_item:
+            QMessageBox.warning(
+                self, "No Selection", "Please select a character to edit."
+            )
+            return
+        name = selected_item.text()
+        character_path = self.character_manager.get_character_path(name)
+        try:
+            with open(character_path, "r", encoding="utf-8") as file:
+                content = file.read()
+        except Exception as e:
+            QMessageBox.critical(
+                self, "Error", f"Failed to read character file: {str(e)}"
+            )
+            return
+
+        # Open a dialog to edit content
+        dialog = EditCharacterDialog(self, name, content)
+        if dialog.exec_() == QDialog.Accepted:
+            new_content = dialog.get_content()
+            try:
+                self.character_manager.edit_character(name, new_content)
+                self.load_characters()
+                QMessageBox.information(
+                    self, "Success", f"Character '{name}' edited successfully."
+                )
+            except Exception as e:
+                QMessageBox.critical(self, "Error", str(e))
+
+    def duplicate_character(self):
+        """Duplicate the selected character."""
+        selected_item = self.character_list.currentItem()
+        if not selected_item:
+            QMessageBox.warning(
+                self, "No Selection", "Please select a character to duplicate."
+            )
+            return
+        original_name = selected_item.text()
+        new_name, ok = QInputDialog.getText(
+            self, "Duplicate Character", "Enter new character name:"
+        )
+        if ok and new_name:
+            if self.character_manager.character_exists(new_name):
+                QMessageBox.warning(
+                    self, "Error", f"Character '{new_name}' already exists."
+                )
+                return
+            try:
+                self.character_manager.duplicate_character(original_name, new_name)
+                self.load_characters()
+                QMessageBox.information(
+                    self,
+                    "Success",
+                    f"Character '{original_name}' duplicated as '{new_name}' successfully.",
+                )
+            except Exception as e:
+                QMessageBox.critical(self, "Error", str(e))
+
+    def delete_character(self):
+        """Delete the selected character."""
+        selected_item = self.character_list.currentItem()
+        if not selected_item:
+            QMessageBox.warning(
+                self, "No Selection", "Please select a character to delete."
+            )
+            return
+        name = selected_item.text()
+        confirm = QMessageBox.question(
+            self,
+            "Confirm Delete",
+            f"Are you sure you want to delete character '{name}'?",
+            QMessageBox.Yes | QMessageBox.No,
+        )
+        if confirm == QMessageBox.Yes:
+            try:
+                self.character_manager.delete_character(name)
+                self.load_characters()
+                QMessageBox.information(
+                    self, "Success", f"Character '{name}' deleted successfully."
+                )
+            except Exception as e:
+                QMessageBox.critical(self, "Error", str(e))
+
+
+class EditCharacterDialog(QDialog):
+    def __init__(self, parent=None, character_name="", content=""):
+        super().__init__(parent)
+        self.setWindowTitle(f"Edit Character: {character_name}")
+        self.setFixedSize(500, 400)
+        self.character_name = character_name
+
+        # Main layout
+        main_layout = QVBoxLayout()
+
+        # Content TextEdit
+        self.content_edit = QTextEdit()
+        self.content_edit.setText(content)
+        main_layout.addWidget(self.content_edit)
+
+        # Buttons Layout
+        buttons_layout = QHBoxLayout()
+        buttons_layout.addStretch()
+
+        self.save_button = QPushButton("Save")
+        self.save_button.clicked.connect(self.accept)
+        buttons_layout.addWidget(self.save_button)
+
+        self.cancel_button = QPushButton("Cancel")
+        self.cancel_button.clicked.connect(self.reject)
+        buttons_layout.addWidget(self.cancel_button)
+
+        main_layout.addLayout(buttons_layout)
+
+        self.setLayout(main_layout)
+
+    def get_content(self):
+        return self.content_edit.toPlainText()
 
 
 class VoiceModelManager(QDialog):
@@ -334,8 +547,8 @@ class VoiceModelManager(QDialog):
 
 # Log crashes to a file
 def ensure_crash_reports_dir():
-    if not os.path.exists("crash_reports"):
-        os.makedirs("crash_reports")
+    if not os.path.exists("../crash_reports"):
+        os.makedirs("../crash_reports")
 
 
 def log_crash(exc_type, exc_value, exc_traceback):
@@ -343,7 +556,7 @@ def log_crash(exc_type, exc_value, exc_traceback):
 
     # Create a timestamped file for the crash report
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    crash_file_path = os.path.join("crash_reports", f"crash_report_{timestamp}.txt")
+    crash_file_path = os.path.join("../crash_reports", f"crash_report_{timestamp}.txt")
 
     # Write the crash details into the report
     with open(crash_file_path, "w") as f:
@@ -382,6 +595,9 @@ class AlterEgo(QMainWindow):
         # Initialize model selection
         self.text_generation_model = None
         self.initialize_model_selection()
+
+        # Initialize Character Manager
+        self.character_manager = CharacterManager()
 
         # Character loading and active character display
         button_and_label_layout = QVBoxLayout()
@@ -526,6 +742,11 @@ class AlterEgo(QMainWindow):
         self.api_settings_action = QAction("API Key Settings", self)
         self.api_settings_action.triggered.connect(self.open_api_key_settings)
         self.menu.addAction(self.api_settings_action)
+
+        # Character Data Management
+        self.manage_characters_action = QAction("Manage Characters", self)
+        self.manage_characters_action.triggered.connect(self.open_character_manager)
+        self.menu.addAction(self.manage_characters_action)
 
         self.character_file = None
         self.character_data = None
@@ -958,7 +1179,11 @@ class AlterEgo(QMainWindow):
             self.audio_checkbox.setEnabled(True)
             self.voice_model_combo.setEnabled(True)
             logging.info("Voice models are available. Audio features enabled.")
-    
+
     def open_api_key_settings(self):
         dialog = APIKeyManagerDialog(self)
+        dialog.exec_()
+
+    def open_character_manager(self):
+        dialog = CharacterManagerDialog(self, self.character_manager)
         dialog.exec_()
