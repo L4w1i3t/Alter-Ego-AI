@@ -2,7 +2,7 @@
 
 import os
 import sys
-import json
+import dotenv
 
 # Add the root to sys.path for module imports. Code breaks without this
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -13,7 +13,6 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QTextEdit,
     QLabel,
-    QFileDialog,
     QMenuBar,
     QAction,
     QMainWindow,
@@ -22,20 +21,13 @@ from PyQt5.QtWidgets import (
     QSizePolicy,
     QComboBox,
     QDialog,
-    QRadioButton,
-    QButtonGroup,
     QCheckBox,
-    QListWidget,
-    QLineEdit,
-    QInputDialog,
-    QWidgetItem,
 )
 from PyQt5.QtCore import Qt, QTimer, pyqtSignal
 from PyQt5.QtGui import QFont
 import io
 import logging
 import warnings
-import tempfile
 import os
 from PyQt5.QtCore import QTimer
 
@@ -52,497 +44,31 @@ import traceback
 from model.emotions import detect_emotions
 from model.elevenlabs_api import (
     change_voice_model,
-    voice_models,
-    add_voice_model,
-    remove_voice_model,
     reload_voice_models,
     get_available_voice_models,
 )
 
 # Import helper files
 from workers import QueryWorker, SpeechRecognitionWorker, ElevenLabsAudioWorker
-from construct import ChatHistoryDialog, SoftwareDetailsDialog
+from construct import (
+    ChatHistoryDialog,
+    SoftwareDetailsDialog,
+    APIKeyManagerDialog,
+    QueryTextEdit,
+    ModelSelectionDialog,
+    CharacterManagerDialog,
+    CharacterLoadDialog,
+    VoiceModelManager,
+)
 from avatar.avatar import AvatarWidget
-from api_key_manager import APIKeyManager
 from character_manager import CharacterManager
+from model import textgen_llama
 
 # Initialize pygame mixer for audio playback
 mixer.init()
 
-import dotenv
-
+# Load .env
 dotenv.load_dotenv()
-
-from model import textgen_gpt, textgen_llama
-
-
-class APIKeyManagerDialog(QDialog):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("API Key Settings")
-        self.setFixedSize(500, 300)
-        self.api_manager = APIKeyManager()
-        layout = QVBoxLayout()
-
-        # Define the services and their corresponding environment variable keys
-        self.services = {"OpenAI": "openai", "ElevenLabs": "elevenlabs"}
-
-        self.service_widgets = {}
-
-        for service_name, service_key in self.services.items():
-            service_layout = QHBoxLayout()
-            label = QLabel(f"{service_name} API Key:")
-            key = self.api_manager.get_api_key(service_key) or ""
-            key_display = QLineEdit(key)
-            key_display.setEchoMode(QLineEdit.Password)
-            key_display.setReadOnly(True)
-            edit_button = QPushButton("Edit")
-            remove_button = QPushButton("Remove")
-
-            # Connect buttons with corresponding methods
-            edit_button.clicked.connect(lambda checked, s=service_key: self.edit_key(s))
-            remove_button.clicked.connect(
-                lambda checked, s=service_key: self.remove_key(s)
-            )
-
-            service_layout.addWidget(label)
-            service_layout.addWidget(key_display)
-            service_layout.addWidget(edit_button)
-            service_layout.addWidget(remove_button)
-            layout.addLayout(service_layout)
-
-            self.service_widgets[service_key] = key_display
-
-        # Add Close button
-        close_button = QPushButton("Close")
-        close_button.clicked.connect(self.accept)
-        layout.addWidget(close_button, alignment=Qt.AlignRight)
-
-        self.setLayout(layout)
-
-    def edit_key(self, service):
-        new_key, ok = QInputDialog.getText(
-            self, f"Edit {service.capitalize()} API Key", "Enter new API key:"
-        )
-        if ok and new_key:
-            success = self.api_manager.update_api_key(service, new_key)
-            if success:
-                self.service_widgets[service].setText(new_key)
-                QMessageBox.information(
-                    self,
-                    "Success",
-                    f"{service.capitalize()} API key updated successfully.",
-                )
-            else:
-                QMessageBox.warning(
-                    self, "Error", f"Failed to update {service.capitalize()} API key."
-                )
-
-    def remove_key(self, service):
-        confirm = QMessageBox.question(
-            self,
-            "Confirm Remove",
-            f"Are you sure you want to remove the {service.capitalize()} API key?",
-            QMessageBox.Yes | QMessageBox.No,
-        )
-        if confirm == QMessageBox.Yes:
-            success = self.api_manager.remove_api_key(service)
-            if success:
-                self.service_widgets[service].setText("")
-                QMessageBox.information(
-                    self,
-                    "Success",
-                    f"{service.capitalize()} API key removed successfully.",
-                )
-            else:
-                QMessageBox.warning(
-                    self, "Error", f"Failed to remove {service.capitalize()} API key."
-                )
-
-
-class QueryTextEdit(QTextEdit):
-    enterPressed = pyqtSignal()  # Custom signal for Enter key
-
-    def keyPressEvent(self, event):
-        if event.key() == Qt.Key_Return and not event.modifiers():
-            # Enter without Shift - send query
-            self.enterPressed.emit()
-        elif event.key() == Qt.Key_Return and event.modifiers() & Qt.ShiftModifier:
-            # Shift+Enter - insert newline
-            super().keyPressEvent(event)
-        else:
-            # Handle all other keys normally
-            super().keyPressEvent(event)
-
-
-class ModelSelectionDialog(QDialog):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Select Text Generation Model")
-        self.setFixedSize(500, 200)
-        layout = QVBoxLayout()
-
-        label = QLabel("Choose a Text Generation Model:")
-        label.setFont(QFont("Courier New", 12))
-        layout.addWidget(label)
-
-        # Radio buttons for selection
-        self.ollama_radio = QRadioButton("Ollama")
-        self.openai_radio = QRadioButton("OpenAI API")
-        self.openai_radio.setFont(QFont("Courier New", 16))
-        self.ollama_radio.setFont(QFont("Courier New", 16))
-        self.ollama_radio.setChecked(True)  # Default selection
-
-        # Group the radio buttons
-        self.button_group = QButtonGroup()
-        self.button_group.addButton(self.openai_radio)
-        self.button_group.addButton(self.ollama_radio)
-
-        layout.addWidget(self.ollama_radio)
-        layout.addWidget(self.openai_radio)
-
-        # OK and Cancel buttons
-        button_layout = QHBoxLayout()
-        self.ok_button = QPushButton("OK")
-        self.ok_button.clicked.connect(self.accept)
-        self.cancel_button = QPushButton("Cancel")
-        self.cancel_button.clicked.connect(self.reject)
-        button_layout.addWidget(self.ok_button)
-        button_layout.addWidget(self.cancel_button)
-
-        layout.addLayout(button_layout)
-        self.setLayout(layout)
-
-    def get_selection(self):
-        if self.openai_radio.isChecked():
-            return "openai"
-        elif self.ollama_radio.isChecked():
-            return "ollama"
-        else:
-            return None
-
-
-class CharacterManagerDialog(QDialog):
-    def __init__(self, parent=None, character_manager=None):
-        super().__init__(parent)
-        self.setWindowTitle("Manage Characters")
-        self.setFixedSize(600, 400)
-        self.character_manager = character_manager
-
-        # Main layout
-        main_layout = QVBoxLayout()
-
-        # Character List
-        self.character_list = QListWidget()
-        self.load_characters()
-        main_layout.addWidget(self.character_list)
-
-        # Buttons Layout
-        buttons_layout = QHBoxLayout()
-
-        self.add_button = QPushButton("Add")
-        self.add_button.clicked.connect(self.add_character)
-        buttons_layout.addWidget(self.add_button)
-
-        self.edit_button = QPushButton("Edit")
-        self.edit_button.clicked.connect(self.edit_character)
-        buttons_layout.addWidget(self.edit_button)
-
-        self.duplicate_button = QPushButton("Duplicate")
-        self.duplicate_button.clicked.connect(self.duplicate_character)
-        buttons_layout.addWidget(self.duplicate_button)
-
-        self.delete_button = QPushButton("Delete")
-        self.delete_button.clicked.connect(self.delete_character)
-        buttons_layout.addWidget(self.delete_button)
-
-        main_layout.addLayout(buttons_layout)
-
-        # Close Button
-        close_button_layout = QHBoxLayout()
-        close_button_layout.addStretch()
-        self.close_button = QPushButton("Close")
-        self.close_button.clicked.connect(self.accept)
-        close_button_layout.addWidget(self.close_button)
-        main_layout.addLayout(close_button_layout)
-
-        self.setLayout(main_layout)
-
-    def load_characters(self):
-        """Load characters into the list widget."""
-        self.character_list.clear()
-        characters = self.character_manager.list_characters()
-        self.character_list.addItems(characters)
-
-    def add_character(self):
-        """Add a new character."""
-        name, ok = QInputDialog.getText(self, "Add Character", "Enter character name:")
-        if ok and name:
-            if self.character_manager.character_exists(name):
-                QMessageBox.warning(
-                    self, "Error", f"Character '{name}' already exists."
-                )
-                return
-            content, ok = QInputDialog.getMultiLineText(
-                self, "Add Character", "Enter character content:"
-            )
-            if ok:
-                try:
-                    self.character_manager.add_character(name, content)
-                    self.load_characters()
-                    QMessageBox.information(
-                        self, "Success", f"Character '{name}' added successfully."
-                    )
-                except Exception as e:
-                    QMessageBox.critical(self, "Error", str(e))
-
-    def edit_character(self):
-        """Edit the selected character."""
-        selected_item = self.character_list.currentItem()
-        if not selected_item:
-            QMessageBox.warning(
-                self, "No Selection", "Please select a character to edit."
-            )
-            return
-        name = selected_item.text()
-        character_path = self.character_manager.get_character_path(name)
-        try:
-            with open(character_path, "r", encoding="utf-8") as file:
-                content = file.read()
-        except Exception as e:
-            QMessageBox.critical(
-                self, "Error", f"Failed to read character file: {str(e)}"
-            )
-            return
-
-        # Open a dialog to edit content
-        dialog = EditCharacterDialog(self, name, content)
-        if dialog.exec_() == QDialog.Accepted:
-            new_content = dialog.get_content()
-            try:
-                self.character_manager.edit_character(name, new_content)
-                self.load_characters()
-                QMessageBox.information(
-                    self, "Success", f"Character '{name}' edited successfully."
-                )
-            except Exception as e:
-                QMessageBox.critical(self, "Error", str(e))
-
-    def duplicate_character(self):
-        """Duplicate the selected character."""
-        selected_item = self.character_list.currentItem()
-        if not selected_item:
-            QMessageBox.warning(
-                self, "No Selection", "Please select a character to duplicate."
-            )
-            return
-        original_name = selected_item.text()
-        new_name, ok = QInputDialog.getText(
-            self, "Duplicate Character", "Enter new character name:"
-        )
-        if ok and new_name:
-            if self.character_manager.character_exists(new_name):
-                QMessageBox.warning(
-                    self, "Error", f"Character '{new_name}' already exists."
-                )
-                return
-            try:
-                self.character_manager.duplicate_character(original_name, new_name)
-                self.load_characters()
-                QMessageBox.information(
-                    self,
-                    "Success",
-                    f"Character '{original_name}' duplicated as '{new_name}' successfully.",
-                )
-            except Exception as e:
-                QMessageBox.critical(self, "Error", str(e))
-
-    def delete_character(self):
-        """Delete the selected character."""
-        selected_item = self.character_list.currentItem()
-        if not selected_item:
-            QMessageBox.warning(
-                self, "No Selection", "Please select a character to delete."
-            )
-            return
-        name = selected_item.text()
-        confirm = QMessageBox.question(
-            self,
-            "Confirm Delete",
-            f"Are you sure you want to delete character '{name}'?",
-            QMessageBox.Yes | QMessageBox.No,
-        )
-        if confirm == QMessageBox.Yes:
-            try:
-                self.character_manager.delete_character(name)
-                self.load_characters()
-                QMessageBox.information(
-                    self, "Success", f"Character '{name}' deleted successfully."
-                )
-            except Exception as e:
-                QMessageBox.critical(self, "Error", str(e))
-
-
-class EditCharacterDialog(QDialog):
-    def __init__(self, parent=None, character_name="", content=""):
-        super().__init__(parent)
-        self.setWindowTitle(f"Edit Character: {character_name}")
-        self.setFixedSize(500, 400)
-        self.character_name = character_name
-
-        # Main layout
-        main_layout = QVBoxLayout()
-
-        # Content TextEdit
-        self.content_edit = QTextEdit()
-        self.content_edit.setText(content)
-        main_layout.addWidget(self.content_edit)
-
-        # Buttons Layout
-        buttons_layout = QHBoxLayout()
-        buttons_layout.addStretch()
-
-        self.save_button = QPushButton("Save")
-        self.save_button.clicked.connect(self.accept)
-        buttons_layout.addWidget(self.save_button)
-
-        self.cancel_button = QPushButton("Cancel")
-        self.cancel_button.clicked.connect(self.reject)
-        buttons_layout.addWidget(self.cancel_button)
-
-        main_layout.addLayout(buttons_layout)
-
-        self.setLayout(main_layout)
-
-    def get_content(self):
-        return self.content_edit.toPlainText()
-
-
-class VoiceModelManager(QDialog):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setWindowTitle("Manage Voice Models")
-        self.setGeometry(100, 100, 800, 600)
-        self.models_file = os.path.join(
-            os.path.dirname(os.path.dirname(__file__)),
-            "model",
-            "elevenlabs_models.json",
-        )
-
-        layout = QVBoxLayout()
-        font = QFont()
-        font.setPointSize(12)
-
-        self.model_list = QListWidget()
-        self.model_list.setFont(font)
-
-        self.name_input = QLineEdit()
-        self.name_input.setFont(font)
-        self.id_input = QLineEdit()
-        self.id_input.setFont(font)
-
-        add_button = QPushButton("Add Model")
-        add_button.setFont(font)
-        remove_button = QPushButton("Remove Model")
-        remove_button.setFont(font)
-
-        # Create labels with the same font
-        name_label = QLabel("Model Name:")
-        name_label.setFont(font)
-        id_label = QLabel("Model ID:")
-        id_label.setFont(font)
-
-        # Set up the layout
-        layout.addWidget(self.model_list)
-
-        input_layout = QHBoxLayout()
-        input_layout.addWidget(name_label)
-        input_layout.addWidget(self.name_input)
-        input_layout.addWidget(id_label)
-        input_layout.addWidget(self.id_input)
-        layout.addLayout(input_layout)
-
-        button_layout = QHBoxLayout()
-        button_layout.addWidget(add_button)
-        button_layout.addWidget(remove_button)
-        layout.addLayout(button_layout)
-
-        self.setLayout(layout)
-
-        # Connect buttons to functions
-        add_button.clicked.connect(self.add_model)
-        remove_button.clicked.connect(self.remove_model)
-
-        # Load existing models
-        self.load_models()
-
-    def load_models(self):
-        try:
-            with open(self.models_file, "r", encoding="utf-8-sig") as f:
-                content = f.read().strip()
-                if not content:
-                    self.voice_models_data = {}
-                    print(f"{self.models_file} is empty. No voice models loaded.")
-                else:
-                    self.voice_models_data = json.loads(content)
-            self.model_list.clear()
-            self.model_list.addItems(self.voice_models_data.keys())
-        except FileNotFoundError:
-            print(
-                f"Could not find voice models file at: {self.models_file}. Initializing with no voice models."
-            )
-            self.voice_models_data = {}
-            with open(self.models_file, "w", encoding="utf-8") as f:
-                json.dump({}, f, indent=4)
-        except json.JSONDecodeError as e:
-            print(f"{self.models_file} is malformed: {str(e)}. Resetting to empty.")
-            self.voice_models_data = {}
-            with open(self.models_file, "w", encoding="utf-8") as f:
-                json.dump({}, f, indent=4)
-        except Exception as e:
-            print(f"Error loading voice models: {str(e)}")
-            self.voice_models_data = {}
-
-    def add_model(self):
-        name = self.name_input.text().strip()
-        model_id = self.id_input.text().strip()
-        if name and model_id:
-            success = add_voice_model(
-                name, model_id
-            )  # Using function from elevenlabs_api.py
-            if success:
-                self.model_list.addItem(name)
-                self.name_input.clear()
-                self.id_input.clear()
-                self.parent().load_voice_models()  # Notify parent to reload
-                self.parent().show_system_message(
-                    f"Voice model '{name}' added successfully.", "Information"
-                )
-            else:
-                QMessageBox.warning(self, "Error", "Failed to add the voice model.")
-        else:
-            QMessageBox.warning(self, "Error", "Both name and ID must be provided.")
-
-    def remove_model(self):
-        current_item = self.model_list.currentItem()
-        if current_item:
-            name = current_item.text()
-            success = remove_voice_model(name)  # Using function from elevenlabs_api.py
-            if success:
-                self.model_list.takeItem(self.model_list.row(current_item))
-                self.parent().load_voice_models()  # Notify parent to reload
-                self.parent().show_system_message(
-                    f"Voice model '{name}' removed successfully.", "Information"
-                )
-            else:
-                QMessageBox.warning(self, "Error", "Failed to remove the voice model.")
-
-    def show_message(self, title, message):
-        msg_box = QMessageBox(self)
-        msg_box.setWindowTitle(title)
-        msg_box.setText(message)
-        msg_box.setFont(QFont("Arial", 12))  # Set font for message box
-        msg_box.exec_()
 
 
 # Log crashes to a file
@@ -582,6 +108,7 @@ def open_voice_model_manager(self):
 
 
 # Main application window
+###################################################################################################################################################################################
 class AlterEgo(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -707,7 +234,7 @@ class AlterEgo(QMainWindow):
         # Add ElevenLabs Audio Toggle
         self.audio_checkbox = QCheckBox("Enable ElevenLabs Speech Audio")
         self.audio_checkbox.setFont(QFont("Courier New", 14))
-        self.audio_checkbox.setChecked(True)  # Default ON
+        self.audio_checkbox.setChecked(False)  # Default OFF
         voice_model_layout.addWidget(self.audio_checkbox)
 
         voice_model_layout.addSpacerItem(
@@ -862,45 +389,47 @@ class AlterEgo(QMainWindow):
         self.active_character_label.setText(f"Active Character: {self.character_file}")
 
     def load_character(self):
-        options = QFileDialog.Options()
-        character_data_dir = os.path.join(os.path.dirname(__file__), "../characterdata")
-        file_name, _ = QFileDialog.getOpenFileName(
-            self,
-            "Select Character File",
-            character_data_dir,
-            "Character Files (*.chr);;All Files (*)",
-            options=options,
-        )
+        # Open the Character Load Dialog to select a character
+        character_load_dialog = CharacterLoadDialog(self.character_manager, self)
 
-        if file_name:
-            self.character_file = os.path.splitext(os.path.basename(file_name))[
-                0
-            ]  # Get character name from file
-            character_path = os.path.join(
-                os.path.dirname(file_name), self.character_file
+        if character_load_dialog.exec_() == QDialog.Accepted:
+            # Get the selected character name from the dialog
+            selected_character_name = (
+                character_load_dialog.character_list.currentItem().text()
             )
 
-            if os.path.exists(f"{character_path}.chr"):
-                with open(f"{character_path}.chr", "r", encoding="utf-8") as file:
+            # Load the character data
+            character_path = self.character_manager.get_character_path(
+                selected_character_name
+            )
+            try:
+                with open(character_path, "r", encoding="utf-8") as file:
+                    self.character_file = selected_character_name
                     self.character_data = file.read()
 
-                self.update_active_character_label()
+                    # Check if the character data is empty
+                    if not self.character_data.strip():
+                        self.show_system_message(
+                            "Warning: The character file is empty. The program may not work as intended.",
+                            "Warning",
+                        )
 
-                # Derive avatar folder from character file name
-                avatar_folder = self.derive_avatar_folder(self.character_file)
-                print(
-                    f"Loading avatar folder: {avatar_folder}"
-                )  # Debugging: Show the extracted folder name
-                self.avatar_widget.set_character_folder(avatar_folder)
+                    self.update_active_character_label()  # Update the UI to show the active character
 
-                # Enable query inputs and speech recognition
-                self.enable_query_features()
-            else:
-                self.show_system_message("Selected character file is invalid.", "Error")
-                self.active_character_label.setText("Active Character: None")
-                self.character_file = None
-                self.character_data = None
-                self.disable_query_features()
+                    # Derive avatar folder from character file name
+                    avatar_folder = self.derive_avatar_folder(self.character_file)
+                    print(
+                        f"Loading avatar folder: {avatar_folder}"
+                    )  # Debugging: Show the extracted folder name
+                    self.avatar_widget.set_character_folder(avatar_folder)
+
+                    # Enable query inputs and speech recognition
+                    self.enable_query_features()
+            except Exception as e:
+                self.show_system_message(
+                    f"Failed to load character '{selected_character_name}': {str(e)}",
+                    "Error",
+                )
 
     def derive_avatar_folder(self, character_file_name):
         """Automatically derive the avatar folder from the character's file name."""

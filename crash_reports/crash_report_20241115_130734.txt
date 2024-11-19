@@ -1,7 +1,0 @@
-Crash Report - 2024-11-15 13:07:34.188741
-Type: AttributeError
-Value: 'AlterEgo' object has no attribute 'character_manager'
-Traceback:
-  File "C:\Users\Charles\Desktop\Coding Projects\AI\Alter Ego\src\gui\gui.py", line 1159, in open_character_manager
-    dialog = CharacterManagerDialog(self, self.character_manager)
-                                          ^^^^^^^^^^^^^^^^^^^^^^
