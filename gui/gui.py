@@ -39,6 +39,7 @@ os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 from pygame import mixer  # For playing audio
 import datetime
 import traceback
+import random
 
 # Import necessary API stuff for the main class
 from model.emotions import detect_emotions
@@ -59,8 +60,8 @@ from construct import (
     CharacterManagerDialog,
     CharacterLoadDialog,
     VoiceModelManager,
+    AvatarWidget
 )
-from avatar.avatar import AvatarWidget
 from character_manager import CharacterManager
 from model import textgen_llama
 
@@ -118,6 +119,9 @@ class AlterEgo(QMainWindow):
         central_widget = QWidget(self)
         self.setCentralWidget(central_widget)
         self.layout = QVBoxLayout()
+
+        # Initialize a list to keep track of child windows
+        self.child_windows = []
 
         # Initialize model selection
         self.text_generation_model = None
@@ -249,6 +253,9 @@ class AlterEgo(QMainWindow):
         self.menu_bar = QMenuBar(self)
         self.setMenuBar(self.menu_bar)
         self.menu = self.menu_bar.addMenu("☰")
+
+        # Add "New Conversation" to the menu
+        self.add_new_conversation_menu()
 
         # Chat History
         self.chat_history_action = QAction("Chat History", self)
@@ -641,6 +648,9 @@ class AlterEgo(QMainWindow):
                 textgen_llama.stop_ollama_server()
             except Exception as e:
                 print(f"Error stopping Ollama server: {e}")
+        # Close all child windows
+        for window in self.child_windows[:]:
+            window.close()
         event.accept()
 
     def enable_query_features(self):
@@ -716,3 +726,30 @@ class AlterEgo(QMainWindow):
     def open_character_manager(self):
         dialog = CharacterManagerDialog(self, self.character_manager)
         dialog.exec_()
+
+    def add_new_conversation_menu(self):
+        # Create a new QAction for opening a new conversation
+        new_conv_action = QAction("Create New Window", self)
+        new_conv_action.setShortcut("Ctrl+N")
+        new_conv_action.triggered.connect(self.open_new_conversation)
+        
+        # Insert the new action at the top of the menu for better visibility
+        # Check if there are existing actions to insert before
+        if self.menu.actions():
+            self.menu.insertAction(self.menu.actions()[0], new_conv_action)
+        else:
+            self.menu.addAction(new_conv_action)
+
+    def open_new_conversation(self):
+        # Create a new instance of AlterEgo
+        new_window = AlterEgo()
+        new_window.setWindowTitle(f"ALTER EGO - Child Instance")
+        
+        # Append the new window to the child_windows list to keep a reference
+        self.child_windows.append(new_window)
+        
+        # Show the new window
+        new_window.show()
+        
+        # Connect the close event to remove the window from the list when closed
+        new_window.destroyed.connect(lambda: self.child_windows.remove(new_window))

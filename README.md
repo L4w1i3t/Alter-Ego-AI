@@ -92,7 +92,8 @@ Once you have the system set up, you can start using ALTER EGO as follows:
 - ALTER EGO will sometimes crash when using speech recognition.
 - The ElevenLabs API can be slow to respond, causing delays in voice synthesis.
 - Chat History does not function when using OpenAI.
-- Error text appears if ElevenLabs audio is enabled but there are no voice models. Happens on startup.
+- When opening a new window, the program will close entirely if you cancel midway through initiation.
+- The user can still toggle ElevenLabs functionality on and off after startup if no voice models were found during initiation.
 
 **If new issues are found, please open an issue on the repository.**
 

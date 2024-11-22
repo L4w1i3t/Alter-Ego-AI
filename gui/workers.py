@@ -12,7 +12,7 @@ from model.textgen_llama import get_query as get_query_llama
 from model.elevenlabs_api import generate_audio
 
 # Load Whisper Model (options: tiny, base, small, medium, large)
-whisper_model = whisper.load_model("tiny")
+whisper_model = whisper.load_model("base")
 
 
 # Worker Thread to handle the API call

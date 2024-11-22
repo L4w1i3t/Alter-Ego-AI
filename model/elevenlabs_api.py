@@ -61,7 +61,7 @@ def load_voice_models():
             name: elevenlabs.Voice(voice_id=vid)
             for name, vid in voice_models_data.items()
         }
-        logging.info("Voice models loaded successfully.")
+        logging.info("Voice model JSON file loaded successfully.")
     except FileNotFoundError:
         logging.warning(f"{VOICE_MODELS_FILE} not found. Creating a new one.")
         with open(VOICE_MODELS_FILE, "w", encoding="utf-8") as f:
