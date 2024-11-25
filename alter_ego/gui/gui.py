@@ -60,7 +60,7 @@ from construct import (
     CharacterManagerDialog,
     CharacterLoadDialog,
     VoiceModelManager,
-    AvatarWidget
+    AvatarWidget,
 )
 from character_manager import CharacterManager
 from model import textgen_llama
@@ -74,8 +74,8 @@ dotenv.load_dotenv()
 
 # Log crashes to a file
 def ensure_crash_reports_dir():
-    if not os.path.exists("../crash_reports"):
-        os.makedirs("../crash_reports")
+    if not os.path.exists("alter_ego/persistent/crash_reports"):
+        os.makedirs("alter_ego/persistent/crash_reports")
 
 
 def log_crash(exc_type, exc_value, exc_traceback):
@@ -83,7 +83,7 @@ def log_crash(exc_type, exc_value, exc_traceback):
 
     # Create a timestamped file for the crash report
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    crash_file_path = os.path.join("../crash_reports", f"crash_report_{timestamp}.txt")
+    crash_file_path = os.path.join("alter_ego/persistent/crash_reports", f"crash_report_{timestamp}.txt")
 
     # Write the crash details into the report
     with open(crash_file_path, "w") as f:
@@ -364,7 +364,7 @@ class AlterEgo(QMainWindow):
         default_character_file = "DEFAULT"
         character_path = os.path.join(
             os.path.dirname(__file__),
-            "../characterdata",
+            "../persistent/characterdata",
             f"{default_character_file}.chr",
         )
         if os.path.exists(character_path):
@@ -732,7 +732,7 @@ class AlterEgo(QMainWindow):
         new_conv_action = QAction("Create New Window", self)
         new_conv_action.setShortcut("Ctrl+N")
         new_conv_action.triggered.connect(self.open_new_conversation)
-        
+
         # Insert the new action at the top of the menu for better visibility
         # Check if there are existing actions to insert before
         if self.menu.actions():
@@ -744,12 +744,12 @@ class AlterEgo(QMainWindow):
         # Create a new instance of AlterEgo
         new_window = AlterEgo()
         new_window.setWindowTitle(f"ALTER EGO - Child Instance")
-        
+
         # Append the new window to the child_windows list to keep a reference
         self.child_windows.append(new_window)
-        
+
         # Show the new window
         new_window.show()
-        
+
         # Connect the close event to remove the window from the list when closed
         new_window.destroyed.connect(lambda: self.child_windows.remove(new_window))

@@ -745,7 +745,7 @@ class VoiceModelManager(QDialog):
         self.setGeometry(100, 100, 800, 600)
         self.models_file = os.path.join(
             os.path.dirname(os.path.dirname(__file__)),
-            "model",
+            "persistent",
             "elevenlabs_models.json",
         )
 
@@ -863,6 +863,7 @@ class VoiceModelManager(QDialog):
         msg_box.setText(message)
         msg_box.setFont(QFont("Arial", 12))  # Set font for message box
         msg_box.exec_()
+
 
 class AvatarWidget(QLabel):
     def __init__(self, parent=None):

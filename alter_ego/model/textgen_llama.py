@@ -57,8 +57,8 @@ MODEL_COMMAND = ["ollama", "run", "llama3.1"]
 
 # Base directory for character data
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CHARACTER_DATA_DIR = os.path.join(BASE_DIR, "../characterdata")
-MEMORY_DB_DIR = os.path.join(BASE_DIR, "../memory_databases")
+CHARACTER_DATA_DIR = os.path.join(BASE_DIR, "../persistent/characterdata")
+MEMORY_DB_DIR = os.path.join(BASE_DIR, "../persistent/memory_databases")
 
 # Ensure memory database directory exists
 if not os.path.exists(MEMORY_DB_DIR):

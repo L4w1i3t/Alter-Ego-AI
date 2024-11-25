@@ -1,4 +1,5 @@
 # textgen_gpt.py
+
 import openai
 import os
 import sqlite3
@@ -7,20 +8,21 @@ from sklearn.metrics.pairwise import cosine_similarity
 from tiktoken import encoding_for_model
 import logging
 
+from api_key_manager import APIKeyManager
+
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 
-# Load environment variables
-from dotenv import load_dotenv
+# Initialize APIKeyManager
+api_key_manager = APIKeyManager()
 
-load_dotenv()
-
-openai_api_key = os.getenv("OPENAI_API_KEY")
+# Retrieve the OpenAI API key from keys.json
+openai_api_key = api_key_manager.get_api_key("openai")
 if openai_api_key:
     logging.info("OpenAI API Key found and loaded successfully.")
 else:
     logging.warning(
-        "OpenAI API Key not found. Please configure in settings to use OpenAI services."
+        "OpenAI API Key not found. Please configure in keys.json to use OpenAI services."
     )
 openai.api_key = openai_api_key
 
@@ -48,8 +50,8 @@ MAX_SHORT_TERM_MEMORY = 5
 
 # Base directory for character data
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-CHARACTER_DATA_DIR = os.path.join(BASE_DIR, "../characterdata")
-MEMORY_DB_DIR = os.path.join(BASE_DIR, "../memory_databases")
+CHARACTER_DATA_DIR = os.path.join(BASE_DIR, "../persistent/characterdata")
+MEMORY_DB_DIR = os.path.join(BASE_DIR, "../persistent/memory_databases")
 
 # Ensure memory database directory exists
 if not os.path.exists(MEMORY_DB_DIR):

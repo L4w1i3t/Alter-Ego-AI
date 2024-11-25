@@ -8,8 +8,10 @@ from pathlib import Path
 
 class CharacterManager:
     def __init__(self):
-        # Define the path to the characterdata directory
-        self.base_dir = Path(__file__).resolve().parent.parent / "characterdata"
+        """Define the path to the characterdata directory"""
+        self.base_dir = (
+            Path(__file__).resolve().parent.parent / "persistent/characterdata"
+        )
         self.base_dir.mkdir(parents=True, exist_ok=True)
 
     def list_characters(self):

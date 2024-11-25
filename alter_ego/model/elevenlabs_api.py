@@ -3,29 +3,33 @@
 import elevenlabs
 from elevenlabs.client import ElevenLabs
 import os
-import dotenv
 import json
 import logging
+
+from api_key_manager import APIKeyManager
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 
-# Load environment variables
-dotenv.load_dotenv()
+# Initialize APIKeyManager
+api_key_manager = APIKeyManager()
 
-api_key = os.getenv("ELEVENLABS_API_KEY")
+# Retrieve the ElevenLabs API key from keys.json
+api_key = api_key_manager.get_api_key("elevenlabs")
 if api_key:
     logging.info("ElevenLabs API Key found and loaded successfully.")
 else:
     logging.warning(
-        "ElevenLabs API Key not found. Please configure in settings to use ElevenLabs services."
+        "ElevenLabs API Key not found. Please configure in keys.json to use ElevenLabs services."
     )
 
 # Initialize ElevenLabs client
 client_init = ElevenLabs(api_key=api_key)
 
 # Load voice models from JSON file
-VOICE_MODELS_FILE = os.path.join(os.path.dirname(__file__), "elevenlabs_models.json")
+VOICE_MODELS_FILE = os.path.join(
+    os.path.dirname(__file__), "../persistent/elevenlabs_models.json"
+)
 
 # Initialize voice_models dictionary
 voice_models = {}

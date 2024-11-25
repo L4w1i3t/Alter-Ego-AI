@@ -1,11 +1,11 @@
-.env
-whenbuilding.txt
+alter_ego/.env
+.gitignore
 venv/
-TODO_LIST.txt
 file_tree.txt
 file_tree_with_code_contents.txt
 create_tree.exe
 create_tree_and_get_contents.exe
-extras_unused_outdated/
 specs.py
 crash_reports/
+alter_ego/persistent/keys.json
+alter_ego/stored_junk/
