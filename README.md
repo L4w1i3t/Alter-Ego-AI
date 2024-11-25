@@ -50,15 +50,41 @@ more limited in its responses.
 
 ## Setup
 
-Currently, ALTER EGO is in the early stages of development and is not publicly available for general use. If you're interested in exploring the project or contributing to its development, you are welcome to clone the repository and set it up yourself. Please note that this program requires:
+Currently, ALTER EGO is in the early stages of development and is not officially available for general use. If you're interested in exploring the project or contributing to its development, you are welcome to clone the repository and set it up yourself. Please note that this program requires:
 
 - **Technical Expertise**: Familiarity with Python, language models, and API integrations.
 - **API Access**: Valid API keys for OpenAI and ElevenLabs.
 - **An Ollama Distribution**: Have Ollama correctly set up on your system.
+- **Python and pip**: This is mainly for installing the program's dependencies.
 - **Hardware Requirements**: A capable system that can handle the computational load, preferably with GPU support. A full breakdown of recommended hardware will come in a future update after significant testing.
 
 Please note that for language models, you will absolutely need the setup for either OpenAI or Ollama to use the program. The API keys are not required to
-run the program, but they are needed to run their respective services.
+run the program itself, but they are needed to run their respective services.
+
+# AS OF 11/24/2024:
+
+I am currently working to create a release for the program that is not made entirely of Python code. In the meantime, I have created a pre-release version that you can activate with either a batch file
+or via CLI (the terminal). As such, here is a set of instructions for setting up and running ALTER EGO locally on your system:
+
+- **1. Download the pre-release package on the "Releases" page.**: Navigate over to the "Releases" page of this repository and download the latest pre-release version. There will only be one zip file,
+as (almost) everything you need is there, and the program is cross-platform (Doesn't matter if you use Windows, Mac, or Linux) and should run fine.
+- **2. Extract the zip file.**: Once you have downloaded the zip file, extract it. Easy enough, right?
+- **3. Download Ollama (SEMI-OPTIONAL)**: Download the latest release of Ollama here: https://github.com/ollama/ollama/releases. When you have that properly installed, you don't have to download any models
+yet. For now, if the server started up by default, stop the server via your taskbar, and also disable Ollama from booting up with other startup apps. This is just my setup, but it makes things a bit easier
+with ALTER EGO, as you can only have one instance of the server running at a time on your machine.
+- **4. Gather your OpenAI and/or ElevenLabs API keys**: If you have either service, you can generate API keys respectively through their playgrounds. Unfortunately, these ARE paid services, so using them
+will cost you either on a subscription basis or a by-token basis. OpenAI's GPT 4o, while paid, is noticeably "smarter" than Ollama, so weigh your options carefully.
+- **5. Go to the ALTER EGO directory and navigate to alter_ego**: One of the first things you will see upon opening the ALTER EGO folder is a shortcut batch file of the same name and a source folder called alter_ego.
+Go to the source directory. This is where you will create a virtual environment (or venv) that holds all the dependencies.
+- **6. Create a virtual environment**: Open your terminal IN the alter_ego directory and enter the command "py -m venv venv" and wait until the venv is created. After that, run "venv/Scripts/activate" to activate the venv.
+You will know if you are in it by the "(venv)" prefix next to your path. All that's left is entering "pip install -r requirements.txt" and waiting, as the venv will then install all dependencies listed in requirements.txt.
+After that, you can close that terminal; you're basically done with all the external stuff.
+- **7. Run ALTER EGO.lnk (or whatever the shortcut is named)**: Self-explanatory. When you do that, a terminal will open, but don't worry, I'm not injecting malware on your computer. There you will see everything initialized,
+and if everything goes smoothly, it should say that files were loaded successfully and that the API keys are missing. This is normal, as you haven't entered them yet. If it says that an LlaMa model is installing, that's also normal (I haven't tested this yet.) You will then get a dialog choice to 
+choose either Ollama or OpenAI for text generation. Choose whichever you want, but know that the respective services will be disabled if you don't have them set up.
+- **8. Add your own data into the program**: Now you can see a hamburger menu where, if clicked, you can now manage your API keys and character data. Next to the voice selection, you can manage your ElevenLabs voice models.
+Feel free to go ham and add whatever the heck you want now that you're in the program.
+- **9. Have fun!**: Now enjoy ALTER EGO to your heart's content (at least what the pre-release has to offer.)
 
 ---
 

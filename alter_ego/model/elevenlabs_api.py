@@ -6,7 +6,7 @@ import os
 import json
 import logging
 
-from api_key_manager import APIKeyManager
+from gui.api_key_manager import APIKeyManager
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)

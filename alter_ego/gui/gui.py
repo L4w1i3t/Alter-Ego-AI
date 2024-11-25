@@ -2,10 +2,9 @@
 
 import os
 import sys
-import dotenv
 
-# Add the root to sys.path for module imports. Code breaks without this
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add the root to sys.path for module imports. Code breaks without this for some reason
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from PyQt5.QtWidgets import (
     QWidget,
     QVBoxLayout,
@@ -39,7 +38,6 @@ os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 from pygame import mixer  # For playing audio
 import datetime
 import traceback
-import random
 
 # Import necessary API stuff for the main class
 from model.emotions import detect_emotions
@@ -68,14 +66,17 @@ from model import textgen_llama
 # Initialize pygame mixer for audio playback
 mixer.init()
 
-# Load .env
-dotenv.load_dotenv()
-
 
 # Log crashes to a file
 def ensure_crash_reports_dir():
-    if not os.path.exists("alter_ego/persistent/crash_reports"):
-        os.makedirs("alter_ego/persistent/crash_reports")
+    global crash_reports_dir
+    
+    # Get the absolute path of the root directory (two levels up from gui.py)
+    root_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    crash_reports_dir = os.path.join(root_dir, "persistent", "crash_reports")
+    
+    if not os.path.exists(crash_reports_dir):
+        os.makedirs(crash_reports_dir)
 
 
 def log_crash(exc_type, exc_value, exc_traceback):
@@ -83,7 +84,7 @@ def log_crash(exc_type, exc_value, exc_traceback):
 
     # Create a timestamped file for the crash report
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    crash_file_path = os.path.join("alter_ego/persistent/crash_reports", f"crash_report_{timestamp}.txt")
+    crash_file_path = os.path.join(crash_reports_dir, f"crash_report_{timestamp}.txt")
 
     # Write the crash details into the report
     with open(crash_file_path, "w") as f:
@@ -93,7 +94,7 @@ def log_crash(exc_type, exc_value, exc_traceback):
         f.write("Traceback:\n")
         traceback.print_tb(exc_traceback, file=f)
 
-    # Optionally print the crash info to the console as well
+    # Print the crash info to the console as well
     print(f"App crashed. Report saved to {crash_file_path}")
 
 
