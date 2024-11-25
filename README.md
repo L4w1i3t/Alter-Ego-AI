@@ -72,7 +72,7 @@ as (almost) everything you need is there, and the program is cross-platform (Doe
 - **3. Download Ollama (SEMI-OPTIONAL)**: Download the latest release of Ollama here: https://github.com/ollama/ollama/releases. When you have that properly installed, you don't have to download any models
 yet. For now, if the server started up by default, stop the server via your taskbar, and also disable Ollama from booting up with other startup apps. This is just my setup, but it makes things a bit easier
 with ALTER EGO, as you can only have one instance of the server running at a time on your machine.
-- **4. Gather your OpenAI and/or ElevenLabs API keys**: If you have either service, you can generate API keys respectively through their playgrounds. Unfortunately, these ARE paid services, so using them
+- **4. Gather your OpenAI and/or ElevenLabs API keys (SEMI-OPTIONAL)**: If you have either service, you can generate API keys respectively through their playgrounds. Unfortunately, these ARE paid services, so using them
 will cost you either on a subscription basis or a by-token basis. OpenAI's GPT 4o, while paid, is noticeably "smarter" than Ollama, so weigh your options carefully.
 - **5. Go to the ALTER EGO directory and navigate to alter_ego**: One of the first things you will see upon opening the ALTER EGO folder is a shortcut batch file of the same name and a source folder called alter_ego.
 Go to the source directory. This is where you will create a virtual environment (or venv) that holds all the dependencies.
