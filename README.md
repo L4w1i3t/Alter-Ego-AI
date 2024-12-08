@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="alter_ego/static/assets/logo.png" alt="Placeholder Logo" title="Placeholder Logo" />
+  <img src="logo.png" alt="Placeholder Logo" title="Placeholder Logo" />
 </div>
 
 ---
