@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ALTER EGO</title>
+  <link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <header class="top-bar">
+    <button class="load-character-btn">Load Character</button>
+    <div class="menu-icon">☰</div>
+  </header>
+
+  <!-- Query Section -->
+  <section class="query-section">
+    <div class="query-input-wrapper">
+      <input type="text" class="query-input" placeholder="Insert Query Here..." />
+    </div>
+    <button class="send-query-btn">Send Query</button>
+  </section>
+
+  <!-- Main Content Area -->
+  <main class="main-content">
+    <div class="response-area">
+      <div class="response-box">
+        [INSERT RESPONSE HERE]
+      </div>
+      <div class="detected-emotions-section">
+        <h3>DETECTED EMOTIONS:</h3>
+        <div class="emotions-box">
+          [INSERT DETECTED EMOTIONS HERE]
+        </div>
+      </div>
+    </div>
+    <div class="avatar-area">
+      [INSERT AVATAR WINDOW HERE]
+    </div>
+  </main>
+
+  <!-- Footer Section -->
+  <footer class="footer">
+    <div class="footer-left">
+      <span>Voice Model: <span>[INSERT LIST OF VOICE MODELS HERE]<br/></span></span>
+      <span>Speech Recognition (F4): <span class="sr-status sr-off">OFF</span></span>
+    </div>
+    <div class="footer-right">
+      Active Character: N/A
+    </div>
+  </footer>
+
+  <!-- Settings Panel (hidden by default) -->
+  <div class="settings-overlay">
+    <div class="settings-panel">
+      <button class="close-settings-btn">X</button>
+      <h2>Settings</h2>
+      <ul>
+        <li id="manage-api-keys">Manage API Keys</li>
+        <li id="manage-voice-models">Manage Voice Models</li>
+        <li id="manage-personas">Manage Personas</li>
+        <li id="chat-history">Chat History</li>
+        <li id="clear-memory">Clear Memory</li>
+        <li id="software-details">Software Details</li>
+        <li></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Include software_details.js before app.js -->
+  <script src="assets/js/software_details.js"></script>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>

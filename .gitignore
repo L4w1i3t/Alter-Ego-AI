@@ -9,3 +9,7 @@ specs.py
 crash_reports/
 alter_ego/persistent/keys.json
 alter_ego/stored_junk/
+node_modules/
+ELECTRON/persistentdata/keys.json
+PYTHON/alter_ego/persistent/keys.json
+keys.json

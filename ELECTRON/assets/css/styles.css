@@ -1,0 +1,305 @@
+/* Global Styles */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: #000;              /* Black background for hacker feel */
+  color: #0f0;                   /* Green text */
+  font-family: "Courier New", Courier, monospace; /* Monospace font */
+  display: flex;
+  flex-direction: column;
+}
+
+/* General styling adjustments */
+button, input {
+  font-family: inherit;
+  color: #0f0;
+  background: #000;
+  border: 1px solid #0f0;
+  padding: 0.5em 1em;
+  border-radius: 0.2em;
+}
+
+button:hover {
+  background: #0f0;
+  color: #000;
+  cursor: pointer;
+}
+
+/* Top Bar */
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1vh 2vw;
+  border-bottom: 1px solid #0f0;
+}
+
+.menu-icon {
+  font-size: 1.5em;
+  cursor: pointer;
+}
+
+.menu-icon:hover {
+  color: #fff; /* Slightly brighter on hover */
+}
+
+/* Query Section */
+.query-section {
+  display: flex;
+  align-items: center;
+  padding: 1vh 2vw;
+  gap: 1vw;
+}
+
+.query-input-wrapper {
+  flex: 1;
+}
+
+.query-input {
+  width: 100%;
+  padding: 0.5em;
+  border: 1px solid #0f0;
+  background: #000;
+  color: #0f0;
+  border-radius: 0.2em;
+}
+
+.query-input::placeholder {
+  color: #0f0;
+  opacity: 0.7;
+}
+
+/* Main Content Area */
+.main-content {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;      /* Wrap if window too narrow */
+  padding: 2vh 2vw;
+  gap: 2vw;
+  overflow: auto;       /* If content overflows, scroll */
+}
+
+/* Response Area */
+.response-area {
+  display: flex;
+  flex-direction: column;
+  flex: 2;              /* More space than avatar area */
+  gap: 2vh;
+  min-width: 40vw;      /* Ensure not too small when wrapping */
+}
+
+.response-box {
+  background: #002000;   /* Slightly lighter black with a tint of green */
+  border: 1px solid #0f0;
+  border-radius: 0.2em;
+  padding: 2vh 1vw;
+  flex: 1;
+  min-height: 20vh;      /* Adjust as needed */
+}
+
+.detected-emotions-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1vh;
+}
+
+.detected-emotions-section h3 {
+  margin: 0;
+  font-size: 1em;
+}
+
+.emotions-box {
+  background: #002000;
+  border: 1px solid #0f0;
+  border-radius: 0.2em;
+  padding: 1vh 1vw;
+  min-height: 10vh;
+}
+
+/* Avatar Area */
+.avatar-area {
+  flex: 1;
+  background: #002000;
+  border: 1px solid #0f0;
+  border-radius: 0.2em;
+  padding: 2vh 1vw;
+  min-width: 20vw;   /* Ensure it doesn't shrink too small */
+}
+
+/* Footer */
+.footer {
+  display: flex;
+  justify-content: space-between;
+  padding: 1vh 2vw;
+  border-top: 1px solid #0f0;
+  font-size: 0.9em;
+}
+
+.footer-left, .footer-right {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.footer-left span {
+  font-weight: bold;
+}
+
+.sr-status {
+  font-weight: bold;
+}
+
+/* Green for ON */
+.sr-on {
+  color: #0f0;
+}
+
+/* Red for OFF */
+.sr-off {
+  color: red;
+}
+
+
+/* Responsive Adjustments */
+/* Already using fluid units, flex, and wrap. 
+   Additional breakpoints can be added as needed. */
+@media (max-width: 600px) {
+  .main-content {
+    flex-direction: column;
+    gap: 2vh;
+  }
+
+  .response-area, .avatar-area {
+    min-width: 90vw;
+  }
+}
+
+/* Settings Overlay & Panel */
+.settings-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.7);
+  display: none; /* hidden by default */
+  justify-content: center;
+  align-items: center;
+  z-index: 999; /* On top of everything */
+}
+
+.settings-panel {
+  background: #000;
+  border: 1px solid #0f0;
+  padding: 2em;
+  border-radius: 0.5em;
+  position: relative;
+  width: 300px;
+  max-width: 90vw; /* responsive on smaller screens */
+}
+
+.settings-panel h2 {
+  margin-top: 0;
+  margin-bottom: 1em;
+  font-size: 1.2em;
+}
+
+.settings-panel ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.settings-panel li {
+  margin: 0.5em 0;
+  cursor: pointer;
+}
+
+.settings-panel li:hover {
+  text-decoration: underline;
+}
+
+.close-settings-btn {
+  position: absolute;
+  top: 0.5em;
+  right: 0.5em;
+  background: #000;
+  color: #0f0;
+  border: 1px solid #0f0;
+  border-radius: 0.2em;
+  cursor: pointer;
+  font-weight: bold;
+  padding: 0.2em 0.5em;
+}
+
+.close-settings-btn:hover {
+  background: #0f0;
+  color: #000;
+}
+
+/* Software Details Modal Styles */
+.details-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.details-box {
+  background: #000;
+  border: 2px solid #0f0;
+  padding: 2em;
+  border-radius: 0.5em;
+  text-align: left;
+  color: #0f0;
+  max-width: 600px;
+  width: 90%;
+  overflow-y: auto;
+  max-height: 80vh;
+}
+
+.details-box h2 {
+  margin-top: 0;
+  margin-bottom: 1em;
+  font-size: 1.5em;
+}
+
+.details-box p, .details-box ul {
+  margin-bottom: 1em;
+}
+
+.details-box ul {
+  list-style: disc inside;
+}
+
+.close-details-btn {
+  padding: 0.5em 1em;
+  border: 1px solid #0f0;
+  background: #000;
+  color: #0f0;
+  cursor: pointer;
+  border-radius: 0.2em;
+  font-family: inherit;
+  display: block;
+  margin: 0 auto;
+}
+
+.close-details-btn:hover {
+  background: #0f0;
+  color: #000;
+}
+
+/* Responsive Adjustments for Details Modal */
+@media (max-width: 600px) {
+  .details-box {
+      max-width: 90vw;
+      padding: 1em;
+  }
+}

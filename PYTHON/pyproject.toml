@@ -1,0 +1,83 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "Alter_Ego"
+version = "0.1.0"
+authors = [
+    {name = "L4w1i3t", email = "clmelvin2004@gmail.com"},
+]
+description = "A desktop AI program that uses OpenAI and ElevenLabs APIs to allow you to textually or verbally converse with anyone you want--literally. "
+readme = "README.md"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+license = { file = "LICENSE" }
+dependencies = [
+    annotated-types==0.7.0
+    anyio==4.6.2.post1
+    certifi==2024.8.30
+    cffi==1.17.1
+    charset-normalizer==3.4.0
+    colorama==0.4.6
+    distro==1.9.0
+    elevenlabs==1.13.0
+    filelock==3.16.1
+    fsspec==2024.10.0
+    h11==0.14.0
+    httpcore==1.0.7
+    httpx==0.27.2
+    huggingface-hub==0.26.2
+    idna==3.10
+    Jinja2==3.1.4
+    jiter==0.7.1
+    joblib==1.4.2
+    llvmlite==0.43.0
+    MarkupSafe==3.0.2
+    more-itertools==10.5.0
+    mpmath==1.3.0
+    networkx==3.4.2
+    numba==0.60.0
+    numpy==2.0.2
+    openai==1.55.0
+    openai-whisper==20240930
+    packaging==24.2
+    pycparser==2.22
+    pydantic==2.10.1
+    pydantic_core==2.27.1
+    pygame==2.6.1
+    PyQt5==5.15.11
+    PyQt5-Qt5==5.15.2
+    PyQt5_sip==12.15.0
+    PyYAML==6.0.2
+    regex==2024.11.6
+    requests==2.32.3
+    safetensors==0.4.5
+    scikit-learn==1.5.2
+    scipy==1.14.1
+    setuptools==75.6.0
+    sniffio==1.3.1
+    sounddevice==0.5.1
+    sympy==1.13.1
+    threadpoolctl==3.5.0
+    tiktoken==0.8.0
+    tokenizers==0.20.3
+    torch==2.5.1
+    tqdm==4.67.1
+    transformers==4.46.3
+    typing_extensions==4.12.2
+    urllib3==2.2.3
+    websockets==14.1
+]
+
+
+[project.gui-scripts]
+# name of the command = "module_name:function_name"
+alter-ego-ai-gui = "alter_ego.gui:main"
+
+
+# [project.scripts]
+# alter-ego-ai = "alter_ego_ai.cli:main"
