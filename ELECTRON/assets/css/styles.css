@@ -100,8 +100,30 @@ button:hover {
 
 .detected-emotions-section {
   display: flex;
+  gap: 1vh;
+}
+
+.query-emotions-section, 
+.response-emotions-section {
+  flex: 1;
+  display: flex;
   flex-direction: column;
   gap: 1vh;
+}
+
+.query-emotions-box, 
+.response-emotions-box {
+  background: #002000;
+  border: 1px solid #0f0;
+  border-radius: 0.2em;
+  padding: 1vh 1vw;
+  height: 10vh;
+  overflow-y: auto;
+}
+
+.query-emotions-box p, 
+.response-emotions-box p {
+  color: red;              /* Override the text color for emotions to red */
 }
 
 .detected-emotions-section h3 {
@@ -125,6 +147,16 @@ button:hover {
   border-radius: 0.2em;
   padding: 2vh 1vw;
   min-width: 20vw;   /* Ensure it doesn't shrink too small */
+  overflow: hidden;   /* Hide overflow */
+  display: flex;      /* Use flexbox to center the image */
+  justify-content: center; /* Center the image horizontally */
+  align-items: center; /* Center the image vertically */
+}
+
+.avatar-area img {
+  min-width: 100%;
+  min-height: 100%;
+  object-fit: cover;   /* Cover the area while maintaining aspect ratio */
 }
 
 /* Footer */
@@ -261,8 +293,31 @@ button:hover {
   color: #0f0;
   max-width: 600px;
   width: 90%;
+  max-height: 90vh;
   overflow-y: auto;
-  max-height: 80vh;
+}
+
+/* Adjust list items for better alignment */
+.details-box ul li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5em 0;
+}
+
+/* Truncate long persona names with ellipsis */
+.details-box ul li span {
+  flex: 1;
+  margin-right: 1em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Ensure buttons do not overflow */
+.details-box ul li button {
+  flex-shrink: 0;
+  margin-left: 0.5em;
 }
 
 .details-box h2 {
@@ -296,10 +351,153 @@ button:hover {
   color: #000;
 }
 
+/* Confirmation Dialog Styles */
+.confirmation-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.confirmation-box {
+  background: #000;
+  border: 2px solid #0f0;
+  padding: 2em;
+  border-radius: 0.5em;
+  text-align: center;
+  color: #0f0;
+  max-width: 400px;
+  width: 90%;
+}
+
+.confirmation-buttons {
+  margin-top: 1.5em;
+  display: flex;
+  justify-content: space-around;
+}
+
+.confirmation-buttons .confirm-btn,
+.confirmation-buttons .cancel-btn {
+  padding: 0.5em 1em;
+  border: 1px solid #0f0;
+  background: #000;
+  color: #0f0;
+  cursor: pointer;
+  border-radius: 0.2em;
+  font-family: inherit;
+}
+
+.confirmation-buttons .confirm-btn:hover {
+  background: #0f0;
+  color: #000;
+}
+
+.confirmation-buttons .cancel-btn:hover {
+  background: #0f0;
+  color: #000;
+}
+
+.result-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+.result-box {
+  background: #000;
+  border: 2px solid #0f0;
+  padding: 2em;
+  border-radius: 0.5em;
+  text-align: center;
+  color: #0f0;
+  max-width: 400px;
+  width: 90%;
+}
+.close-result-btn {
+  margin-top: 1.5em;
+  padding: 0.5em 1em;
+  border: 1px solid #0f0;
+  background: #000;
+  color: #0f0;
+  cursor: pointer;
+  border-radius: 0.2em;
+  font-family: inherit;
+}
+.close-result-btn:hover {
+  background: #0f0;
+  color: #000;
+}
+
+/* Custom Select Styles */
+.custom-select {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+}
+
+.custom-select select {
+  display: none; /* Hide the default select */
+}
+
+.select-selected {
+  background-color: #000; /* Match the background color */
+  color: #0f0; /* Match the text color */
+  border: 1px solid #0f0; /* Match the border color */
+  padding: 0.5em 1em;
+  border-radius: 0.2em;
+  cursor: pointer;
+}
+
+.select-selected:hover {
+  background-color: #0f0; /* Change background on hover */
+  color: #000; /* Change text color on hover */
+}
+
+.select-items {
+  position: absolute;
+  background-color: #000; /* Match the background color */
+  border: 1px solid #0f0; /* Match the border color */
+  z-index: 99;
+  width: 100%;
+  display: none; /* Hidden by default */
+}
+
+.select-items div {
+  color: #0f0; /* Match the text color */
+  padding: 0.5em 1em;
+  cursor: pointer;
+}
+
+.select-items div:hover {
+  background-color: #0f0; /* Change background on hover */
+  color: #000; /* Change text color on hover */
+}
+
 /* Responsive Adjustments for Details Modal */
 @media (max-width: 600px) {
   .details-box {
-      max-width: 90vw;
-      padding: 1em;
+    max-width: 95vw;
+    padding: 1em;
+  }
+
+  .details-box ul li {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .details-box ul li div {
+    margin-top: 0.5em;
   }
 }
