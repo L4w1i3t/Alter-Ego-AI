@@ -50,7 +50,7 @@ more limited in its responses.
 
 ## Setup
 
-As of 1/20/2025, ALTER EGO is completely portable; if everything goes well, the program should be able to be run out of the box. The required packages and local LLM engine (Ollama) are bundled with the release, so all that is required of you, the user, is:
+As of 1/20/2025, ALTER EGO is completely portable; if everything goes well, the program should be able to be run out of the box! Upon running the app, there will be a small popup for a setup wizard that checks for all dependencies, so do not be alarmed. The required packages and local LLM engine (Ollama) are bundled with the release, so all that is required of you, the user, is:
 
 - **Technical Expertise**: Familiarity with language models and API integrations.
 - **API Access**: Valid API keys for OpenAI and ElevenLabs (if you desire to use these features.)
@@ -58,6 +58,8 @@ As of 1/20/2025, ALTER EGO is completely portable; if everything goes well, the 
 
 Please note that for language models, you will absolutely need the setup for either OpenAI or Ollama to use the program. The API keys are not required to
 run the program itself, but they are needed to run their respective services. Ollama is enabled by default regardless.
+
+**If you have any issues with setup, please contact me or open an issue on the repository.**
 
 ---
 
