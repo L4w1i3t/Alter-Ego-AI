@@ -32,9 +32,7 @@ ALTER EGO is an AI platform that transforms the way you interact with digital pe
 
 - **Customizable Personalities**: Create and interact with AI-driven personalities that mimic the speech patterns, knowledge, and behaviors of any character you choose. Results may vary.
 
-- **Language Model Selection**: Be able to chose which language models to use in your interactions on startup, between OpenAI and Ollama. The former requires
-an API key and costs on a per-token basis, but is noticeable more robust. The latter is open-source and zero-cost, but requires external setup and is
-more limited in its responses.
+- **Language Model Selection**: Choose between OpenAI GPT (requires API key, per-token cost) for robust responses or Ollama (open-source, zero-cost) for budget-friendly interactions.
 
 - **Advanced Speech Recognition**: Utilize OpenAI Whisper for accurate and real-time voice input processing.
 
