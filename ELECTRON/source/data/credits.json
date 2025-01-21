@@ -1,7 +1,22 @@
 {
     "softwareName": "ALTER EGO",
     "version": "0.1.0",
-    "developedBy": "L4w1i3t",
+    "developedBy": "L",
+    "Tools": [
+        "OpenAI GPT-3.5 Turbo",
+        "Ollama",
+        "Llama3.2-3B",
+        "Roberta-Base Go-Emotions",
+        "Elevenlabs Multilingual v2 TTS",
+        "Python 3.12",
+        "Flask",
+        "Waitress (WSGI server)",
+        "HTML5",
+        "CSS3",
+        "JavaScript",
+        "NodeJS",
+        "Electron"
+    ],
     "credits": [
         "COMING SOON"
     ],

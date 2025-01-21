@@ -19,6 +19,10 @@ async function showSoftwareDetails() {
       <p><strong>Software Name:</strong> ${details.softwareName}</p>
       <p><strong>Version:</strong> ${details.version}</p>
       <p><strong>Developed By:</strong> ${details.developedBy}</p>
+      <p><strong>Tools:</strong></p>
+      <ul>
+        ${details.tools.map(tool => `<li>${tool}</li>`).join('')}
+      </ul>
       <p><strong>Credits:</strong></p>
       <ul>
         ${details.credits.map(credit => `<li>${credit}</li>`).join('')}
