@@ -10,3 +10,5 @@ PYTHON/alter_ego/persistent/keys.json
 PYTHON/alter_ego/stored_junk/
 node_modules/
 keys.json
+Python/
+Ollama/

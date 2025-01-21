@@ -1,0 +1,34 @@
+{
+  "name": "alterego_electron",
+  "productName": "ALTEREGO",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "electron .",
+    "dev": "set NODE_ENV=development && npm start",
+    "obfuscate": "javascript-obfuscator assets/js --output assets/js-obfuscated",
+    "package-linux": "electron-packager . ALTEREGO --platform=linux --arch=x64 --out=release-builds --overwrite --icon=assets/gui/favicon.ico",
+    "package-macos": "electron-packager . ALTEREGO --platform=darwin --arch=x64 --out=release-builds --overwrite --icon=assets/gui/favicon.icns",
+    "package-win32": "electron-packager . ALTEREGO --platform=win32 --arch=ia32 --out=release-builds --overwrite --icon=assets/gui/favicon.ico",
+    "package-win64": "electron-packager . ALTEREGO --platform=win32 --arch=x64 --out=release-builds --overwrite --icon=assets/gui/favicon.ico"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/electron": "^1.6.12",
+    "@types/node": "^22.10.1",
+    "concurrently": "^9.1.0",
+    "electron": "^33.2.1",
+    "electron-reload": "^2.0.0-alpha.1",
+    "typescript": "^5.7.2"
+  },
+  "dependencies": {
+    "axios": "^1.7.9",
+    "elevenlabs": "^0.18.1",
+    "marked": "^15.0.6",
+    "openai": "^4.76.1"
+  }
+}
