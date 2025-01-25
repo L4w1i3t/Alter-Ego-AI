@@ -117,9 +117,7 @@ async function showApiKeyManager() {
   overlay.appendChild(box);
   document.body.appendChild(overlay);
 
-  //-------------------------------------------------
-  // Helper: masks a key, e.g. "sk-pr...BgA"
-  //-------------------------------------------------
+  // Masks a key, e.g. "sk-pr...BgA"
   function maskKey(key) {
     if (key.length <= 10) {
       return key[0] + '...' + key[key.length - 1];
@@ -129,9 +127,7 @@ async function showApiKeyManager() {
     return start + '...' + end;
   }
 
-  //-------------------------------------------------
-  // Helper: open a form to edit a specific key
-  //-------------------------------------------------
+  // Open a form to edit a specific key
   async function editApiKey(keyName, oldValue) {
     const formOverlay = document.createElement('div');
     formOverlay.classList.add('details-overlay');
@@ -196,9 +192,7 @@ async function showApiKeyManager() {
     document.body.appendChild(formOverlay);
   }
 
-  //-------------------------------------------------
-  // Helper: show a “restart required” message
-  //-------------------------------------------------
+  // Show a “restart required” message
   function showRestartNotification() {
     const notificationOverlay = document.createElement('div');
     notificationOverlay.classList.add('details-overlay');

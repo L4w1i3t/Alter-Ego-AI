@@ -2,7 +2,7 @@
     "softwareName": "ALTER EGO",
     "version": "0.1.0",
     "developedBy": "L",
-    "Tools": [
+    "tools": [
         "OpenAI GPT-3.5 Turbo",
         "Ollama",
         "Llama3.2-3B",

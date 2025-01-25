@@ -163,6 +163,7 @@ button:hover {
   border-radius: 0.2em;
   padding: 2vh 1vw;
   min-width: 20vw; /* Ensure it doesn't shrink too small */
+  max-height: 65vh;
   overflow: hidden; /* Hide overflow */
   display: flex; /* Use flexbox to center the image */
   justify-content: center; /* Center the image horizontally */
@@ -173,6 +174,8 @@ button:hover {
   min-width: 100%;
   min-height: 100%;
   object-fit: cover; /* Cover the area while maintaining aspect ratio */
+  align-self: flex-start;
+  filter: hue-rotate(90deg) saturate(3) brightness(1.2);
 }
 
 /* Footer */
@@ -532,9 +535,6 @@ button:hover {
   }
 }
 
-/* ================================================== */
-/*               CUSTOM SCROLLBAR STYLING            */
-
 /* For Chrome, Edge, Safari, and Electron/Chromium browsers */
 ::-webkit-scrollbar {
   width: 8px;               /* scrollbar width */
@@ -584,6 +584,11 @@ button:hover {
   padding: 10px 20px;
 }
 
+.overlay-content h2 {
+  font-size: 1em;
+  font-style: italic;
+}
+
 .warning-overlay {
   position: fixed;
   top: 0;
@@ -613,7 +618,7 @@ button:hover {
 
 /* Make the overall box slightly wider for keys */
 .api-keys-box {
-  max-width: 550px; /* adjust as needed */
+  max-width: 550px;
 }
 
 /* Container that holds the list of key cards */
@@ -681,7 +686,7 @@ button:hover {
 
 /* Edit box inside the overlay */
 .api-key-edit-box {
-  max-width: 420px; /* narrower for clarity */
+  max-width: 420px;
 }
 
 /* A container for the “cards” (similar to .api-key-list-container) */

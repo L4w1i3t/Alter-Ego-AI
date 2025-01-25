@@ -17,12 +17,12 @@ async function showVoiceManager() {
   title.textContent = 'Manage Voice Models';
   box.appendChild(title);
 
-  // A short instructions paragraph (optional)
+  // Short instructions
   const instructions = document.createElement('p');
   instructions.textContent = 'View, edit, or delete existing voice models, or add new ones.';
   box.appendChild(instructions);
 
-  // Container for the “cards”
+  // Container for the cards
   const cardList = document.createElement('div');
   cardList.classList.add('manager-card-list');
 
@@ -33,8 +33,7 @@ async function showVoiceManager() {
     const card = document.createElement('div');
     card.classList.add('manager-card');
 
-    // The name + ID, or just name. 
-    // If you want it “Name: ID”, we can do one span or two. 
+    // The name + ID 
     const nameSpan = document.createElement('span');
     nameSpan.classList.add('manager-card-name');
     nameSpan.textContent = `${name}: ${modelId}`;
@@ -89,11 +88,6 @@ async function showVoiceManager() {
 
   overlay.appendChild(box);
   document.body.appendChild(overlay);
-
-  // ---------------------------------
-  // HELPER functions from old code
-  // (just removing the <ul>/<li> approach)
-  // ---------------------------------
   
   async function addVoiceModelForm() {
     const formOverlay = document.createElement('div');

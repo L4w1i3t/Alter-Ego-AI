@@ -47,25 +47,49 @@ document.addEventListener('DOMContentLoaded', async () => {
     return text;
   }
 
+  function playBase64Audio(base64Audio) {
+    try {
+      // Determine the MIME type. Adjust if your audio format differs.
+      const mimeType = 'audio/mpeg'; // Common for MP3. Use 'audio/wav' for WAV files, etc.
+  
+      // Create a new Audio object with the base64 data
+      const audio = new Audio(`data:${mimeType};base64,${base64Audio}`);
+  
+      // Play the audio
+      audio.play().catch(error => {
+        console.error('Error playing audio:', error);
+      });
+    } catch (error) {
+      console.error('Failed to play audio:', error);
+    }
+  }
+  
+
   async function submitQuery() {
     const queryInputEl = document.querySelector('.query-input');
     const responseBoxEl = document.querySelector('.response-box');
-
+    const avatarImgEl = document.querySelector('.avatar-area img');
+  
     const userQuery = queryInputEl.value.trim();
     if (userQuery === "") return;
-
+  
     // Grab the currently selected voice model from the custom select
     const selectedVoiceModel = document.querySelector('.voice-model-selector-container .select-selected').textContent.trim();
     let voiceModelName = selectedVoiceModel;
     if (!voiceModelName || voiceModelName === '-- Select Voice Model --') {
       voiceModelName = null;
     }
-
+  
     const personaPrompt = currentPersonaPrompt;
-
+  
     queryInputEl.value = '';
     responseBoxEl.textContent = "Thinking...";
-
+    
+    // Update avatar to "Thinking" image
+    if (avatarImgEl) {
+      avatarImgEl.src = 'persistentdata/avatars/DEFAULT/THINKING.png';
+    }
+  
     const response = await fetch('http://localhost:5000/query', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -75,33 +99,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         voice_model_name: voiceModelName 
       })
     });
-
+  
     const data = await response.json();
     let finalText = data.response;
-
+  
     // Display the assistant's text response
     finalText = convertSimpleMarkdownToHtml(finalText);
     typeOutText(responseBoxEl, finalText, 10);
-
+  
     // Display Emotions
     displayEmotions(data.query_emotions, '.query-emotions-box');
     displayEmotions(data.response_emotions, '.response-emotions-box');
-
+  
     // Update Avatar
     updateAvatarForEmotion(data.response_emotions);
-
+  
     // Play the returned audio if present
     if (data.audio_base64) {
+      console.log('Audio Base64:', data.audio_base64);
       playBase64Audio(data.audio_base64);
     }
-  }
-
-  function playBase64Audio(base64Data) {
-    const audioUrl = `data:audio/mpeg;base64,${base64Data}`;
-    const audio = new Audio(audioUrl);
-    audio.play().catch((error) => {
-      console.error("Audio playback failed:", error);
-    });
+    
   }
 
   function displayEmotions(emotionsObj, selector) {

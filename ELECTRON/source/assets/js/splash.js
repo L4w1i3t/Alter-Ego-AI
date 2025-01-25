@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function hideSplashScreen() {
         splashScreen.classList.add('hidden');
         
-        // Optional: Remove from DOM after transition
+        // Remove from DOM after transition
         setTimeout(() => {
             splashScreen.style.display = 'none';
         }, 500);
@@ -40,6 +40,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Run loading simulation and then hide splash screen
     simulateLoading().then(hideSplashScreen);
 
-    // Optional: Allow manual dismissal
+    // Allow manual dismissal
     //splashScreen.addEventListener('click', hideSplashScreen);
 });

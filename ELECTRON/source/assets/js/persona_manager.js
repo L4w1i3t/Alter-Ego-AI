@@ -19,7 +19,7 @@ async function showPersonaManager() {
   title.textContent = 'Manage Personas';
   box.appendChild(title);
 
-  // A short description or instructions (optional)
+  // A short description or instructions
   const instructions = document.createElement('p');
   instructions.textContent = 'View, edit, or delete existing personas, or add new ones.';
   box.appendChild(instructions);
@@ -88,12 +88,6 @@ async function showPersonaManager() {
 
   overlay.appendChild(box);
   document.body.appendChild(overlay);
-
-  // ----------------------------------------------------
-  // Below are the same helper functions you already had:
-  // addPersonaForm, editPersona, deletePersona
-  // (just removing the old <ul>/<li> references)
-  // ----------------------------------------------------
 
   async function addPersonaForm() {
     const formOverlay = document.createElement('div');

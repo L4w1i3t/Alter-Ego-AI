@@ -6,7 +6,7 @@
 
 ALTER EGO is a digital interactive AI interface that allows you to converse and communicate with a replication of any personality you so desire. It blends speech recognition, dynamic text and voice generation, and matching avatars to maximize the user experience. This program utilizes OpenAI GPT and Whisper, Ollama, ElevenLabs, and roberta-base go_emotions technologies in order to bring characters and personas to life. Make an assistant, make a friend, make a teacher--the possibilities are vast!
 
-***CURRENT VERSION: Beta 1.0***
+***CURRENT VERSION: Alpha 1.0***
 
 ---
 
