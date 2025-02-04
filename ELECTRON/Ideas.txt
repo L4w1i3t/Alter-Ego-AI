@@ -1,2 +1,0 @@
-Add real-time conversation ability (like a VC or something)
-Add a feature where two different personas can talk to one another
