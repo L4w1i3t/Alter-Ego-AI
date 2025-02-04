@@ -398,7 +398,7 @@ def query():
                 {"role": "user", "content": "warm-up"}
             ]
             # We do a one-off call to openai
-            answer = get_chat_completion(chat_messages, model="gpt-3.5-turbo", temperature=0.7)
+            answer = get_chat_completion(chat_messages, model="chatgpt-4o-latest", temperature=0.7)
 
         # Return a response that indicates warm-up is done, 
         # but we do not do memory or emotion detection for the warm-up
@@ -516,7 +516,7 @@ And now, you must act according to the following persona with the aforementioned
         # We call get_chat_completion() with the assembled messages
         answer = get_chat_completion(
             chat_messages, 
-            model="gpt-3.5-turbo",
+            model="chatgpt-4o-latest",
             temperature=0.7
         )
 

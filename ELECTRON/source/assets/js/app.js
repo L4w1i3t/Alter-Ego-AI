@@ -1,8 +1,11 @@
+// Note: We’ve temporarily commented out all references to `srOn`, `srStatusEl`,
+// and the F4 key toggle.
+
 document.addEventListener('DOMContentLoaded', async () => {
   const modelSelectionOverlay = document.getElementById('model-selection-overlay');
   const selectOllamaBtn = document.getElementById('select-ollama');
   const selectOpenAIBtn = document.getElementById('select-openai');
-  const srStatusEl = document.querySelector('.sr-status');
+  // const srStatusEl = document.querySelector('.sr-status'); // COMMENTED OUT
   const queryInputEl = document.querySelector('.query-input');
   const sendQueryBtn = document.querySelector('.send-query-btn');
   const menuIconEl = document.querySelector('.menu-icon');
@@ -14,7 +17,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   const warmingUpOverlay = document.getElementById('warming-up-overlay');
 
   let currentPersonaPrompt = "You are a program called ALTER EGO. You are not an assistant but rather meant to be a companion, so you should avoid generic assistant language. Respond naturally and conversationally, as though you are a human engaging in dialog. You are a whimsical personality, though you should never respond with more than three sentences at a time. If and only if the user asks for more information, point them to the github repository at https://github.com/L4w1i3t/Alter-Ego-AI."; // Default persona data
-  let srOn = false; // Speech recognition OFF by default
+  
+  // let srOn = false; // COMMENTED OUT: Speech recognition OFF by default
+
   let defaultCharacter = 'N/A';
   let currentCharacter = 'ALTER EGO';
   let currentVoiceModelName = 'N/A';
@@ -22,13 +27,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Populate voice model dropdown
   await populateVoiceModelSelector();
 
-  // Toggle Speech Recognition on F4 key
+  // COMMENTED OUT: Toggle Speech Recognition on F4 key
+  /*
   document.addEventListener('keydown', (event) => {
     if (event.key === 'F4') {
       srOn = !srOn;
       updateSpeechRecognitionStatus();
     }
   });
+  */
 
   // Submit query on Send Query button click
   sendQueryBtn.addEventListener('click', submitQuery);
@@ -51,11 +58,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   function playBase64Audio(base64Audio) {
     try {
       // Determine the MIME type. Adjust if your audio format differs.
-      const mimeType = 'audio/mpeg'; // Common for MP3. Use 'audio/wav' for WAV files, etc.
-  
+      const mimeType = 'audio/mpeg'; // Common for MP3.
+
       // Create a new Audio object with the base64 data
       const audio = new Audio(`data:${mimeType};base64,${base64Audio}`);
-  
+
       // Play the audio
       audio.play().catch(error => {
         console.error('Error playing audio:', error);
@@ -64,33 +71,32 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.error('Failed to play audio:', error);
     }
   }
-  
 
   async function submitQuery() {
     const queryInputEl = document.querySelector('.query-input');
     const responseBoxEl = document.querySelector('.response-box');
     const avatarImgEl = document.querySelector('.avatar-area img');
-  
+
     const userQuery = queryInputEl.value.trim();
     if (userQuery === "") return;
-  
+
     // Grab the currently selected voice model from the custom select
     const selectedVoiceModel = document.querySelector('.voice-model-selector-container .select-selected').textContent.trim();
     let voiceModelName = selectedVoiceModel;
     if (!voiceModelName || voiceModelName === '-- Select Voice Model --') {
       voiceModelName = null;
     }
-  
+
     const personaPrompt = currentPersonaPrompt;
-  
+
     queryInputEl.value = '';
     responseBoxEl.textContent = "Thinking...";
-    
-    // Update avatar to "Thinking" image
+
+    // Update avatar to "THINKING" image
     if (avatarImgEl) {
       avatarImgEl.src = 'persistentdata/avatars/DEFAULT/THINKING.png';
     }
-  
+
     const response = await fetch('http://localhost:5000/query', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -101,27 +107,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         voice_model_name: voiceModelName
       })
     });
-  
+
     const data = await response.json();
     let finalText = data.response;
-  
+
     // Display the assistant's text response
     finalText = convertSimpleMarkdownToHtml(finalText);
     typeOutText(responseBoxEl, finalText, 10);
-  
+
     // Display Emotions
     displayEmotions(data.query_emotions, '.query-emotions-box');
     displayEmotions(data.response_emotions, '.response-emotions-box');
-  
+
     // Update Avatar
     updateAvatarForEmotion(data.response_emotions);
-  
+
     // Play the returned audio if present
     if (data.audio_base64) {
       console.log('Audio Base64:', data.audio_base64);
       playBase64Audio(data.audio_base64);
     }
-    
   }
 
   function displayEmotions(emotionsObj, selector) {
@@ -181,16 +186,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     }, speed);
   }
 
-  function updateSpeechRecognitionStatus() {
-    srStatusEl.classList.remove('sr-on', 'sr-off');
-    if (srOn) {
-      srStatusEl.textContent = 'ON';
-      srStatusEl.classList.add('sr-on');
-    } else {
-      srStatusEl.textContent = 'OFF';
-      srStatusEl.classList.add('sr-off');
-    }
-  }
+  // COMMENTED OUT: function updateSpeechRecognitionStatus() {
+  //   srStatusEl.classList.remove('sr-on', 'sr-off');
+  //   if (srOn) {
+  //     srStatusEl.textContent = 'ON';
+  //     srStatusEl.classList.add('sr-on');
+  //   } else {
+  //     srStatusEl.textContent = 'OFF';
+  //     srStatusEl.classList.add('sr-off');
+  //   }
+  // }
 
   // Show settings panel when menu icon is clicked
   menuIconEl.addEventListener('click', () => {
@@ -325,10 +330,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   function showServerFailedOverlay() {
     const warmingUpOverlay = document.getElementById('warming-up-overlay');
     if (warmingUpOverlay) {
-      // If you want to re-use the same overlay,
-      // just change the text to say "Server failed to start. Please restart."
       warmingUpOverlay.classList.remove('hidden');
-  
       const overlayContent = warmingUpOverlay.querySelector('.warning-overlay-content');
       if (overlayContent) {
         overlayContent.innerHTML = `
@@ -337,7 +339,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
       }
     }
-  } 
+  }
 
   // Load Character functionality
   loadCharacterBtn.addEventListener('click', async () => {
@@ -346,7 +348,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.error('Failed to load personas.');
       return;
     }
-    const personas = result.personas; // {name: '...', ...}
+    const personas = result.personas; // { name: 'something.chr' }
+
     const charOverlay = document.createElement('div');
     charOverlay.classList.add('details-overlay');
 
@@ -361,6 +364,35 @@ document.addEventListener('DOMContentLoaded', async () => {
     charList.style.listStyle = 'none';
     charList.style.padding = '0';
 
+    // Option to revert to default persona
+    const defaultLi = document.createElement('li');
+    defaultLi.style.display = 'flex';
+    defaultLi.style.justifyContent = 'space-between';
+    defaultLi.style.marginBottom = '0.5em';
+
+    const defaultNameSpan = document.createElement('span');
+    defaultNameSpan.textContent = 'Use Default (ALTER EGO)';
+    defaultLi.appendChild(defaultNameSpan);
+
+    const defaultLoadBtn = document.createElement('button');
+    defaultLoadBtn.textContent = 'Load';
+    defaultLoadBtn.addEventListener('click', async () => {
+      // Revert to default
+      defaultCharacter = 'ALTER EGO';
+      currentCharacter = 'ALTER EGO';
+      activeCharacterEl.textContent = 'ALTER EGO';
+
+      // Reset the persona prompt back to the original default
+      currentPersonaPrompt =
+        "You are a program called ALTER EGO. You are not an assistant but rather meant to be a companion, so you should avoid generic assistant language. Respond naturally and conversationally, as though you are a human engaging in dialog. You are a whimsical personality, though you should never respond with more than three sentences at a time. If and only if the user asks for more information, point them to the github repository at https://github.com/L4w1i3t/Alter-Ego-AI.";
+
+      // Close the overlay
+      document.body.removeChild(charOverlay);
+    });
+    defaultLi.appendChild(defaultLoadBtn);
+    charList.appendChild(defaultLi);
+
+    // Now list out custom personas
     personas.forEach(p => {
       const li = document.createElement('li');
       li.style.display = 'flex';
@@ -369,6 +401,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const nameSpan = document.createElement('span');
       nameSpan.textContent = p.name;
+      li.appendChild(nameSpan);
 
       const loadBtn = document.createElement('button');
       loadBtn.textContent = 'Load';
@@ -384,8 +417,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         document.body.removeChild(charOverlay);
       });
-
-      li.appendChild(nameSpan);
       li.appendChild(loadBtn);
       charList.appendChild(li);
     });
@@ -403,19 +434,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     charOverlay.appendChild(charBox);
     document.body.appendChild(charOverlay);
   });
-
-    charBox.appendChild(charList);
-
-    const closeCharBtn = document.createElement('button');
-    closeCharBtn.textContent = 'Close';
-    closeCharBtn.classList.add('close-details-btn');
-    closeCharBtn.addEventListener('click', () => {
-      document.body.removeChild(charOverlay);
-    });
-    charBox.appendChild(closeCharBtn);
-
-    charOverlay.appendChild(charBox);
-    document.body.appendChild(charOverlay);
 
   async function populateVoiceModelSelector() {
     const result = await window.electronAPI.getVoiceModels();

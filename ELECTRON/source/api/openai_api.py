@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.DEBUG)
 keys = load_keys()
 openai.api_key = keys.get("OPENAI_API_KEY", "")
 
-def get_chat_completion(messages, model="gpt-3.5-turbo", temperature=0.7):
+def get_chat_completion(messages, model="chatgpt-4o-latest", temperature=0.7):
     """
     Generate a response from OpenAI's chat.completions endpoint using a list of messages.
     

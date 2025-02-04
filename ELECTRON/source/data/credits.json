@@ -1,9 +1,9 @@
 {
     "softwareName": "ALTER EGO",
-    "version": "0.1.0",
+    "version": "Alpha 1.0",
     "developedBy": "L",
     "tools": [
-        "OpenAI GPT-3.5 Turbo",
+        "OpenAI GPT-4o",
         "Ollama",
         "hf.co/Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2-GGUF",
         "Roberta-Base Go-Emotions",
