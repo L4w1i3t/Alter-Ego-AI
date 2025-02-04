@@ -746,3 +746,98 @@ button:hover {
   background: #0f0;
   color: #000;
 }
+
+/* Dark backdrop that covers the whole screen */
+.chat-history-overlay {
+  position: fixed;
+  top: 0; 
+  left: 0;
+  width: 100vw; 
+  height: 100vh;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  justify-content: center; 
+  align-items: center;
+  z-index: 9999;
+}
+
+/* White "box" in the center */
+.chat-history-box {
+  background: #000; /* If you prefer black or white, adjust accordingly */
+  border: 2px solid #0f0;
+  padding: 1em;
+  border-radius: 0.5em;
+  width: 80%;
+  max-width: 600px; 
+  max-height: 80vh;
+  overflow: hidden; /* We'll have a scrollable container inside */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Title */
+.chat-history-box h2 {
+  margin: 0 0 1em 0;
+  color: #0f0;
+}
+
+/* Scroll container for messages */
+.chat-messages-container {
+  flex: 1;
+  overflow-y: auto; 
+  padding-right: 1em; /* so scroll doesn't overlap text */
+}
+
+/* Each message bubble */
+.chat-message {
+  margin-bottom: 1em;
+  padding: 0.5em;
+  border-radius: 0.4em;
+  max-width: 100%;
+}
+
+/* Timestamps smaller/dimmer */
+.chat-timestamp {
+  font-size: 0.8em;
+  opacity: 0.7;
+  margin: 0;
+  margin-bottom: 0.25em;
+}
+
+/* Actual text content */
+.chat-content {
+  margin: 0;
+  white-space: pre-wrap; /* so newlines in text show */
+}
+
+/* User messages in white text on a darker background */
+.user-message {
+  background: #333;
+  color: #fff;
+  align-self: flex-end;
+}
+
+/* Assistant messages in a “blue bubble” style */
+.assistant-message {
+  background: #1877F2; 
+  /* or whatever shade of blue you want (like iMessage) */
+  color: #fff;
+  align-self: flex-start;
+}
+
+/* Close button styles */
+.close-chat-history-btn {
+  background: #000;
+  color: #0f0;
+  border: 1px solid #0f0;
+  border-radius: 4px;
+  padding: 0.5em 1em;
+  margin-top: 1em;
+  cursor: pointer;
+  align-self: center;
+}
+
+.close-chat-history-btn:hover {
+  background: #0f0;
+  color: #000;
+}

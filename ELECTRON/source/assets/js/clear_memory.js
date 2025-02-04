@@ -7,31 +7,22 @@ const memoryDatabasesPath = path.join(__dirname, '../../persistentdata/memory_da
 // Function to clear the memory_databases folder
 function clearMemory() {
     return new Promise((resolve, reject) => {
-        fs.readdir(memoryDatabasesPath, (err, files) => {
+        fs.rm(memoryDatabasesPath, { recursive: true, force: true }, (err) => {
             if (err) {
-                console.error('Error reading the memory_databases directory:', err);
+                console.error('Error clearing the memory_databases directory:', err);
                 return reject(err);
             }
+            console.log('Cleared the memory_databases directory.');
 
-            // Iterate over each file in the directory
-            let deletePromises = files.map(file => {
-                return new Promise((res, rej) => {
-                    const filePath = path.join(memoryDatabasesPath, file);
-                    fs.unlink(filePath, (err) => {
-                        if (err) {
-                            console.error('Error deleting file:', filePath, err);
-                            rej(err);
-                        } else {
-                            console.log('Deleted file:', filePath);
-                            res();
-                        }
-                    });
-                });
+            // Recreate the memory_databases folder
+            fs.mkdir(memoryDatabasesPath, { recursive: true }, (err) => {
+                if (err) {
+                    console.error('Error creating the memory_databases directory:', err);
+                    return reject(err);
+                }
+                console.log('Recreated the memory_databases directory.');
+                resolve();
             });
-
-            Promise.all(deletePromises)
-                .then(() => resolve())
-                .catch(reject);
         });
     });
 }

@@ -4,6 +4,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     onModelSelection: (callback) => ipcRenderer.on('show-model-selection', callback),
     selectModel: (modeChoice) => ipcRenderer.send('model-selected', modeChoice),
     clearMemory: () => ipcRenderer.send('clear-memory'),
+    getChatHistory: (personaName) => ipcRenderer.invoke('get-chat-history', personaName),
+    onWarmUpFailure: (callback) => ipcRenderer.on('warm-up-failure', callback),
     onClearMemoryResult: (callback) => ipcRenderer.on('clear-memory-result', callback),
     getSoftwareDetails: () => ipcRenderer.invoke('get-software-details'),
     getPersonas: () => ipcRenderer.invoke('get-personas'),

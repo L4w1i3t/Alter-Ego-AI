@@ -5,9 +5,11 @@
     "tools": [
         "OpenAI GPT-3.5 Turbo",
         "Ollama",
-        "Llama3.2-3B",
+        "hf.co/Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2-GGUF",
         "Roberta-Base Go-Emotions",
         "Elevenlabs Multilingual v2 TTS",
+        "MiniLM-L6-v2",
+        "FAISS",
         "Python 3.12",
         "Flask",
         "Waitress (WSGI server)",
@@ -26,7 +28,7 @@
         "Disclaimer: This software is provided \"as is\", without warranty of any kind."
     ],
     "knownIssues": [
-        "- The program does not currently have memory implementation.",
-        "- The program does not currently have voice recognition implementation."
+        "- The program does not currently have voice recognition implementation.",
+        "- When using the Ollama model, responses can sometimes repeat or become incoherent from memory retrieval. This is an issue with the model itself, not with the algorithm."        
     ]
 }

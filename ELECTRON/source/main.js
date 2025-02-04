@@ -1,3 +1,7 @@
+/*********************************************************************
+ * main.js (Updated)
+ *********************************************************************/
+
 const os = require('os');
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const path = require('path');
@@ -8,10 +12,10 @@ require('./ipcHandlers');
 
 // Globals
 let wizardWindow = null; // Reference to the setup wizard window
-let mainWindow = null; // Reference to the main application window
-let pythonProcess = null; // Reference to the Python process
-let isOllamaUsed = false; // Flag to indicate if Ollama is used
-let ollamaServer = null; // Reference to the Ollama server process
+let mainWindow = null;   // Reference to the main application window
+let pythonProcess = null;   // Reference to the Python process
+let isOllamaUsed = false;   // Flag to indicate if Ollama is used
+let ollamaServer = null;    // Reference to the Ollama server process
 
 // Determine Python Executable Early
 let pythonExecutable = 'python'; // Default for non-Windows
@@ -20,18 +24,14 @@ if (process.platform === 'win32') {
   // Path to embedded Python on Windows
   pythonExecutable = path.join(__dirname, 'Python', 'embedded', 'python.exe');
   if (!fs.existsSync(pythonExecutable)) {
-    // Handle missing embedded Python
     console.error('Embedded Python executable not found at:', pythonExecutable);
-    // Prompt to reinstall or contact support on Github
+    // Prompt to reinstall or contact support, etc.
   }
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
-// 1) CREATE WIZARD WINDOW
-// ──────────────────────────────────────────────────────────────────────────────
-/**
- * Creates the setup wizard window.
- */
+/*********************************************************************
+ * 1) CREATE WIZARD WINDOW
+ *********************************************************************/
 function createWizardWindow() {
   wizardWindow = new BrowserWindow({
     width: 600,
@@ -49,63 +49,48 @@ function createWizardWindow() {
 
   wizardWindow.setMenuBarVisibility(false);
   wizardWindow.loadFile('wizard.html');
-  
+
   wizardWindow.on('closed', () => {
     wizardWindow = null;
   });
 }
 
-// Helpers to send logs/errors to wizard
-/**
- * Logs a message to the wizard window and console.
- * @param {string} msg - The message to log.
- */
+// Helper logs to wizard
 function wizardLog(msg) {
   if (wizardWindow) {
     wizardWindow.webContents.send('wizard-log', msg);
   }
   console.log('[Wizard Log]', msg);
 }
-
-/**
- * Logs an error message to the wizard window and console.
- * @param {string} msg - The error message to log.
- */
 function wizardError(msg) {
   if (wizardWindow) {
     wizardWindow.webContents.send('wizard-error', msg);
   }
   console.error('[Wizard Error]', msg);
 }
-
-/**
- * Sends a 'wizard-done' message to the wizard window.
- */
 function wizardDone() {
   if (wizardWindow) {
     wizardWindow.webContents.send('wizard-done');
   }
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
-// 2) SETUP WIZARD FLOW
-// ──────────────────────────────────────────────────────────────────────────────
-/**
- * Runs the setup wizard to check and install necessary dependencies.
- */
+/*********************************************************************
+ * 2) SETUP WIZARD FLOW
+ *********************************************************************/
 async function runSetupWizard() {
   try {
     if (process.platform === 'win32') {
-      // Windows uses an embedded Python environment
+      // Windows uses embedded Python environment
       wizardLog('Running on Windows. Using embedded Python...');
 
-      // Now do your checks
+      // Our checks
       await checkOllama();
       await checkGoEmotionsModel();
+      await checkMiniLM6();
 
       wizardLog('All Windows prerequisites met via embedded environment.');
     } else {
-      // Mac/Linux flow: find python, ensure pip, install requirements, etc.
+      // Mac/Linux flow: find or install python, ensure pip, etc.
       const pythonCmd = await findOrInstallPython();
       wizardLog(`Using Python command: ${pythonCmd}`);
 
@@ -114,6 +99,7 @@ async function runSetupWizard() {
 
       await checkOllama();
       await checkGoEmotionsModel();
+      await checkMiniLM6();
 
       wizardLog('All requirements have been met on Linux/Mac.');
     }
@@ -123,18 +109,13 @@ async function runSetupWizard() {
   } catch (err) {
     wizardError('Setup error: ' + err.message);
     dialog.showErrorBox('Setup Error', `Unable to complete setup: ${err.message}`);
-    // Force quit commented out right now:
-    // app.quit();
+    // app.quit(); // optional
   }
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
-// 2A) PYTHON CHECK (No more Windows auto-install)
-// ──────────────────────────────────────────────────────────────────────────────
-/**
- * Finds or installs Python on the system.
- * @returns {Promise<string>} - The command to use for Python.
- */
+/*********************************************************************
+ * 2A) PYTHON CHECK
+ *********************************************************************/
 async function findOrInstallPython() {
   try {
     await commandExists('python');
@@ -169,12 +150,6 @@ async function findOrInstallPython() {
   }
 }
 
-/**
- * Runs a command in the terminal.
- * @param {string} cmd - The command to run.
- * @param {string[]} args - The arguments for the command.
- * @returns {Promise<void>}
- */
 function runCommand(cmd, args) {
   return new Promise((resolve, reject) => {
     wizardLog(`Running: ${cmd} ${args.join(' ')}`);
@@ -187,14 +162,9 @@ function runCommand(cmd, args) {
   });
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
-// 2B) PIP CHECK
-// ──────────────────────────────────────────────────────────────────────────────
-/**
- * Ensures that pip is installed for the given Python command.
- * @param {string} pythonCmd - The Python command to use.
- * @returns {Promise<void>}
- */
+/*********************************************************************
+ * 2B) PIP CHECK
+ *********************************************************************/
 function ensurePipInstalled(pythonCmd) {
   return new Promise((resolve, reject) => {
     exec(`${pythonCmd} -m pip --version`, (error, stdout) => {
@@ -215,14 +185,9 @@ function ensurePipInstalled(pythonCmd) {
   });
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
-// 2C) INSTALL REQUIREMENTS.TXT
-// ──────────────────────────────────────────────────────────────────────────────
-/**
- * Installs the Python dependencies listed in requirements.txt.
- * @param {string} pythonCmd - The Python command to use.
- * @returns {Promise<void>}
- */
+/*********************************************************************
+ * 2C) INSTALL REQUIREMENTS.TXT
+ *********************************************************************/
 function installRequirements(pythonCmd) {
   return new Promise((resolve, reject) => {
     const reqPath = path.join(__dirname, 'api', 'requirements.txt');
@@ -241,89 +206,96 @@ function installRequirements(pythonCmd) {
   });
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
-// 2D) CHECK OLLAMA
-// ──────────────────────────────────────────────────────────────────────────────
+/*********************************************************************
+ * 2D) CHECK OLLAMA
+ *********************************************************************/
 /**
- * Checks for the Ollama environment and starts the Ollama server.
- * @returns {Promise<void>}
+ * Because you mentioned “pull won't work unless the server is on,”
+ * we start the server first, then spawn the pull. Once pull is done,
+ * we explicitly kill the server. That way, there is no orphan.
  */
-async function checkOllama() {
+function checkOllama() {
   return new Promise((resolve, reject) => {
     const ollamaPath = path.join(__dirname, 'api', 'Ollama', 'ollama.exe');
     const ollamaExecutable = process.platform === 'win32' ? ollamaPath : 'ollama';
 
     if (!fs.existsSync(ollamaPath)) {
-      wizardLog('Embeddable Ollama environment NOT found. Ensure ollama.exe is in source/api/Ollama.');
-      // Still treat missing ollama as a hard error
+      wizardLog('Embeddable Ollama environment NOT found.');
       return reject(new Error('Missing Ollama environment.'));
     }
 
-    wizardLog('Found embeddable Ollama environment.');
-    wizardLog('Starting Ollama server to download base language model...');
-
-    // 1) Start the Ollama server
+    // Start the server
+    wizardLog('Starting Ollama server to download the base model...');
     ollamaServer = spawn(ollamaExecutable, ['serve']);
 
-    // Logging from the server
+    // Verbose logging from the server
     ollamaServer.stdout.on('data', (data) => {
-      wizardLog(`Ollama server: ${data}`);
+      wizardLog(`[Ollama Server STDOUT] ${data.toString()}`);
+    });
+    ollamaServer.stderr.on('data', (data) => {
+      wizardLog(`[Ollama Server STDERR] ${data.toString()}`);
     });
 
     ollamaServer.on('close', (code) => {
-      wizardLog(`Ollama server exited with code ${code} (Intentional if 1)`);
+      wizardLog(`(Server Exited) Ollama server child process exited with code: ${code}`);
     });
 
-    // Helper to stop the server safely
-    let serverStopped = false;
-    function stopServer() {
-      if (!serverStopped && ollamaServer) {
-        serverStopped = true;
-        wizardLog('Stopping Ollama server...');
-        if (process.platform === 'win32') {
-          spawn('taskkill', ['/PID', String(ollamaServer.pid), '/F', '/T']);
-        } else {
-          ollamaServer.kill('SIGKILL');
-        }
-      }
-    }
-
-    // If wizard closes, kill server
-    if (wizardWindow) {
-      wizardWindow.on('closed', () => {
-        wizardLog('Wizard closed. Stopping Ollama server...');
-        stopServer();
-      });
-    }
-
-    // 2) Always pull the model
+    // Now run "ollama pull <model>" to ensure the model is installed
     const modelName = 'artifish/llama3.2-uncensored';
-    wizardLog(`Pulling base language model (${modelName}) via Ollama. This may take a few minutes...`);
+    wizardLog(`Pulling base language model (“${modelName}”). This may take a few minutes...`);
+
     const pullProcess = spawn(ollamaExecutable, ['pull', modelName]);
+    
+    // Verbose logging for the pull process
+    pullProcess.stdout.on('data', (data) => {
+      wizardLog(`[Pull STDOUT] ${data.toString()}`);
+    });
+    pullProcess.stderr.on('data', (data) => {
+      wizardLog(`[Pull STDERR] ${data.toString()}`);
+    });
 
-    // 3) On pull complete, stop server and ALWAYS resolve
-    pullProcess.on('close', (code) => {
-      stopServer();
+    pullProcess.on('exit', (code) => {
+      wizardLog(`[Pull] "ollama pull" process exited with code ${code}.`);
 
-      if (code === 0) {
-        wizardLog(`Base language model pulled successfully: "${modelName}".`);
-      } else {
-        // Instead of rejecting, we just log the exit code and continue
-        wizardLog(`"ollama pull" exited with code ${code}, ignoring and continuing...`);
-      }
-      // In either case, we resolve
+      // Once the pull is done, kill the server
+      wizardLog('Stopping the Ollama server now that the pull has finished...');
+      stopOllamaServer();
+
+      // We do not consider a non-zero code fatal,
+      // so we simply resolve either way:
       resolve();
     });
   });
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
-// 2E) CHECK GO EMOTIONS MODEL (AUTO-DOWNLOAD IF MISSING)
-// ──────────────────────────────────────────────────────────────────────────────
 /**
- * Checks for the Go Emotions model and downloads it if missing.
- * @returns {Promise<void>}
+ * Helper to forcibly kill the Ollama server so we do not orphan the pull.
  */
+function stopOllamaServer() {
+  if (!ollamaServer) {
+    wizardLog('No Ollama server process to stop.');
+    return;
+  }
+
+  const pid = ollamaServer.pid;
+  wizardLog(`Attempting to kill Ollama server PID ${pid}...`);
+
+  try {
+    if (process.platform === 'win32') {
+      spawn('taskkill', ['/PID', String(pid), '/F', '/T']);
+    } else {
+      ollamaServer.kill('SIGKILL');
+    }
+  } catch (err) {
+    wizardError(`Failed to kill Ollama server: ${err}`);
+  }
+
+  ollamaServer = null;
+}
+
+/*********************************************************************
+ * 2E) CHECK GO EMOTIONS MODEL AND MINILM-L6
+ *********************************************************************/
 function checkGoEmotionsModel() {
   return new Promise((resolve, reject) => {
     const home = os.homedir();
@@ -336,25 +308,26 @@ function checkGoEmotionsModel() {
     );
 
     if (fs.existsSync(modelPath)) {
-      wizardLog('Roberta-base-go_emotions is already downloaded in huggingface cache.');
+      wizardLog('Roberta-base-go_emotions model already cached.');
       resolve();
     } else {
-      wizardLog(
-        'Roberta-base-go_emotions not found locally. Downloading from:\n' +
-        'https://huggingface.co/SamLowe/roberta-base-go_emotions.'
-      );
+      wizardLog('Roberta-base-go_emotions not found locally. Downloading from Hugging Face...');
 
       const pythonScriptPath = path.join(__dirname, 'install', 'emotionpipe.py');
       const pythonCmd = process.platform === 'win32' ? pythonExecutable : 'python';
-      const pythonProcess = spawn(pythonCmd, [pythonScriptPath]);
 
-      pythonProcess.stdout.on('data', (data) => {
-        wizardLog(`Download progress: ${data}`);
+      const downloader = spawn(pythonCmd, [pythonScriptPath]);
+
+      downloader.stdout.on('data', (data) => {
+        wizardLog(`[GoEmotions STDOUT] ${data.toString()}`);
+      });
+      downloader.stderr.on('data', (data) => {
+        wizardLog(`[GoEmotions STDERR] ${data.toString()}`);
       });
 
-      pythonProcess.on('close', (code) => {
+      downloader.on('close', (code) => {
         if (code === 0) {
-          wizardLog('Roberta-base-go_emotions model downloaded successfully.');
+          wizardLog('Go Emotions model downloaded successfully.');
           resolve();
         } else {
           reject(new Error('Failed to download Roberta-base-go_emotions model.'));
@@ -364,12 +337,50 @@ function checkGoEmotionsModel() {
   });
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
-// 3) IF ALL GOES WELL, CREATE MAIN WINDOW
-// ──────────────────────────────────────────────────────────────────────────────
-/**
- * Closes the wizard window and creates the main application window.
- */
+function checkMiniLM6() {
+  return new Promise((resolve, reject) => {
+    const home = os.homedir();
+    const modelPath = path.join(
+      home,
+      '.cache',
+      'huggingface',
+      'hub',
+      'models--sentence-transformers--all-MiniLM-L6-v2'
+    );
+
+    if (fs.existsSync(modelPath)) {
+      wizardLog('MiniLM-L6-v2 model already cached.');
+      resolve();
+    } else {
+      wizardLog('MiniLM-L6-v2 not found locally. Downloading from Hugging Face...');
+
+      const pythonScriptPath = path.join(__dirname, 'install', 'mempipe.py');
+      const pythonCmd = process.platform === 'win32' ? pythonExecutable : 'python';
+
+      const downloader = spawn(pythonCmd, [pythonScriptPath]);
+
+      downloader.stdout.on('data', (data) => {
+        wizardLog(`[MiniLM STDOUT] ${data.toString()}`);
+      });
+      downloader.stderr.on('data', (data) => {
+        wizardLog(`[MiniLM STDERR] ${data.toString()}`);
+      });
+
+      downloader.on('close', (code) => {
+        if (code === 0) {
+          wizardLog('MiniLM-L6-v2 model downloaded successfully.');
+          resolve();
+        } else {
+          reject(new Error('Failed to download MiniLM-L6-v2 model.'));
+        }
+      });
+    }
+  })
+}
+
+/*********************************************************************
+ * 3) IF ALL GOES WELL, CREATE MAIN WINDOW
+ *********************************************************************/
 function closeWizardWindow() {
   if (wizardWindow) {
     wizardWindow.close();
@@ -378,9 +389,6 @@ function closeWizardWindow() {
   createMainWindow();
 }
 
-/**
- * Creates the main application window.
- */
 function createMainWindow() {
   mainWindow = new BrowserWindow({
     width: 1280,
@@ -399,7 +407,7 @@ function createMainWindow() {
   mainWindow.setMenuBarVisibility(false);
   mainWindow.loadFile('index.html');
 
-  //“model-selected” logic
+  // Show model selection once main window is ready
   mainWindow.webContents.once('did-finish-load', () => {
     mainWindow.webContents.send('show-model-selection');
   });
@@ -411,16 +419,11 @@ function createMainWindow() {
   });
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
-// 4) START PYTHON SERVER
-// ──────────────────────────────────────────────────────────────────────────────
-/**
- * Starts the Python server with the specified mode.
- * @param {string} modeChoice - The mode to use for the server ('ollama' or 'openai').
- */
+/*********************************************************************
+ * 4) START PYTHON SERVER
+ *********************************************************************/
 function startPythonServer(modeChoice) {
-  // Use the initialized pythonExecutable
-  let pythonCmd = pythonExecutable; // Already set based on OS
+  let pythonCmd = pythonExecutable; // already determined
 
   const serverScriptPath = path.join(__dirname, 'api', 'ollama_server.py');
   const env = { ...process.env, MODEL_BACKEND: modeChoice };
@@ -433,11 +436,9 @@ function startPythonServer(modeChoice) {
   pythonProcess.stdout.on('data', (data) => {
     console.log(`[Python stdout] ${data}`);
   });
-
   pythonProcess.stderr.on('data', (data) => {
     console.warn(`[Python stderr] ${data}`);
   });
-
   pythonProcess.on('close', (code) => {
     console.log(`Python server exited with code ${code}`);
   });
@@ -455,6 +456,7 @@ function startPythonServer(modeChoice) {
           console.log('Python server warmed up successfully.');
           const allWindows = BrowserWindow.getAllWindows();
           if (allWindows.length > 0) {
+            // Let the renderer hide the warming-up overlay
             allWindows[0].webContents.send('hide-warming-up');
           }
           return;
@@ -464,28 +466,28 @@ function startPythonServer(modeChoice) {
       }
       await new Promise(resolve => setTimeout(resolve, delay));
     }
+  
     console.warn('Failed to warm up server after multiple attempts.');
-  };
+    // Here is where you notify the renderer
+    const allWindows = BrowserWindow.getAllWindows();
+    if (allWindows.length > 0) {
+      allWindows[0].webContents.send('warm-up-failure');
+    }
+  };  
 
   setTimeout(() => {
     checkServerReady();
   }, 5000);
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
-// 5) APP EVENTS
-// ──────────────────────────────────────────────────────────────────────────────
-/**
- * Event handler for when the app is ready.
- */
+/*********************************************************************
+ * 5) APP EVENTS
+ *********************************************************************/
 app.whenReady().then(() => {
   createWizardWindow();
   runSetupWizard();
 });
 
-/**
- * Event handler for when the app is activated (e.g., clicked on the dock).
- */
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWizardWindow();
@@ -495,9 +497,6 @@ app.on('activate', () => {
   }
 });
 
-/**
- * Event handler for when all windows are closed.
- */
 app.on('window-all-closed', async () => {
   try {
     // Attempt graceful shutdown

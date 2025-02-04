@@ -1,4 +1,4 @@
-from transformers import pipeline
-import os
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
-pipe = pipeline("text-classification", model="SamLowe/roberta-base-go_emotions")
+tokenizer = AutoTokenizer.from_pretrained("SamLowe/roberta-base-go_emotions")
+model = AutoModelForSequenceClassification.from_pretrained("SamLowe/roberta-base-go_emotions")

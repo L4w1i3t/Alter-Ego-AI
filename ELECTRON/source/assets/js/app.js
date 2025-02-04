@@ -13,9 +13,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   const voiceModelSelectorContainer = document.querySelector('.voice-model-selector-container');
   const warmingUpOverlay = document.getElementById('warming-up-overlay');
 
-  let currentPersonaPrompt = "You are the secretary/guide of a program called ALTER EGO. You are meant to help the user on how to use the program."; // Default persona data
+  let currentPersonaPrompt = "You are a program called ALTER EGO. You are not an assistant but rather meant to be a companion, so you should avoid generic assistant language. Respond naturally and conversationally, as though you are a human engaging in dialog. You are a whimsical personality, though you should never respond with more than three sentences at a time. If and only if the user asks for more information, point them to the github repository at https://github.com/L4w1i3t/Alter-Ego-AI."; // Default persona data
   let srOn = false; // Speech recognition OFF by default
-  let currentCharacter = 'N/A';
+  let defaultCharacter = 'N/A';
+  let currentCharacter = 'ALTER EGO';
   let currentVoiceModelName = 'N/A';
 
   // Populate voice model dropdown
@@ -93,10 +94,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const response = await fetch('http://localhost:5000/query', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
+      body: JSON.stringify({
         query: userQuery,
+        persona_name: currentCharacter,
         persona_prompt: personaPrompt,
-        voice_model_name: voiceModelName 
+        voice_model_name: voiceModelName
       })
     });
   
@@ -311,6 +313,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.showApiKeyManager();
   });
 
+  const chatHistoryOption = document.getElementById('chat-history');
+  chatHistoryOption.addEventListener('click', () => {
+    window.showChatHistory();
+  });
+
+  window.electronAPI.onWarmUpFailure(() => {
+    showServerFailedOverlay();
+  });
+
+  function showServerFailedOverlay() {
+    const warmingUpOverlay = document.getElementById('warming-up-overlay');
+    if (warmingUpOverlay) {
+      // If you want to re-use the same overlay,
+      // just change the text to say "Server failed to start. Please restart."
+      warmingUpOverlay.classList.remove('hidden');
+  
+      const overlayContent = warmingUpOverlay.querySelector('.warning-overlay-content');
+      if (overlayContent) {
+        overlayContent.innerHTML = `
+          <h1>Server failed to start!</h1>
+          <h2>Please restart the application.</h2>
+        `;
+      }
+    }
+  } 
+
   // Load Character functionality
   loadCharacterBtn.addEventListener('click', async () => {
     const result = await window.electronAPI.getPersonas();
@@ -345,6 +373,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       const loadBtn = document.createElement('button');
       loadBtn.textContent = 'Load';
       loadBtn.addEventListener('click', async () => {
+        defaultCharacter = p.name;
         currentCharacter = p.name;
         activeCharacterEl.textContent = p.name;
         const readRes = await window.electronAPI.readPersona(p.name);
@@ -374,6 +403,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     charOverlay.appendChild(charBox);
     document.body.appendChild(charOverlay);
   });
+
+    charBox.appendChild(charList);
+
+    const closeCharBtn = document.createElement('button');
+    closeCharBtn.textContent = 'Close';
+    closeCharBtn.classList.add('close-details-btn');
+    closeCharBtn.addEventListener('click', () => {
+      document.body.removeChild(charOverlay);
+    });
+    charBox.appendChild(closeCharBtn);
+
+    charOverlay.appendChild(charBox);
+    document.body.appendChild(charOverlay);
 
   async function populateVoiceModelSelector() {
     const result = await window.electronAPI.getVoiceModels();

@@ -29,6 +29,7 @@
     "axios": "^1.7.9",
     "elevenlabs": "^0.18.1",
     "marked": "^15.0.6",
-    "openai": "^4.76.1"
+    "openai": "^4.76.1",
+    "socket.io-client": "^4.8.1"
   }
 }

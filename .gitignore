@@ -12,3 +12,6 @@ node_modules/
 keys.json
 Python/
 Ollama/
+Ideas.txt
+Known_Issues.txt
+release-builds/

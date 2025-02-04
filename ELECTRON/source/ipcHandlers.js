@@ -16,7 +16,17 @@ const {
 // Handle memory clearing IPC
 ipcMain.on('clear-memory', async (event) => {
   try {
+    // 1) Clear all persistent memory on disk
     await clearMemory();
+
+    // 2) Also instruct Python to clear its in-memory STM.
+    //    (We assume the Python server is still running on localhost:5000.)
+    const response = await fetch('http://127.0.0.1:5000/clear_stm', { method: 'POST' });
+    if (!response.ok) {
+      console.warn('Warning: Attempt to clear STM returned non-2xx status:', response.status);
+    }
+
+    // 3) Let the renderer know it succeeded
     event.sender.send('clear-memory-result', { success: true, message: 'Memory cleared successfully.' });
   } catch (error) {
     console.error('Error clearing memory:', error);
@@ -178,5 +188,36 @@ ipcMain.handle('update-api-key', async (event, { keyName, newKeyValue }) => {
   } catch (error) {
     console.error('Error updating API key:', error);
     return { success: false, message: 'Failed to update API key.' };
+  }
+});
+
+const {
+  loadChatHistory,
+  appendChatMessage,
+} = require('./assets/js/memory_manager');
+
+//
+//  GET CHAT HISTORY (FOR ACTIVE PERSONA)
+//
+ipcMain.handle('get-chat-history', async (event, personaName) => {
+  try {
+    const history = loadChatHistory(personaName);
+    return { success: true, history };
+  } catch (error) {
+    console.error('Error getting chat history:', error);
+    return { success: false, history: [] };
+  }
+});
+
+//
+// If you want to also allow forced appending from the front end, you can do:
+// 
+ipcMain.handle('append-chat-message', async (event, { personaName, role, content }) => {
+  try {
+    appendChatMessage(personaName, role, content);
+    return { success: true };
+  } catch (error) {
+    console.error('Error appending chat message:', error);
+    return { success: false, message: error.message };
   }
 });
