@@ -1,3 +1,5 @@
+// voice_manager.js
+// NOT USED IN THE PROGRAM AT THE MOMENT
 async function showVoiceManager() {
   const result = await window.electronAPI.getVoiceModels();
   if (!result.success) {
@@ -28,7 +30,7 @@ async function showVoiceManager() {
 
   // Build a card for each voice model
   Object.keys(models).forEach((name) => {
-    const modelId = models[name];
+    const model_id = models[name];
 
     const card = document.createElement('div');
     card.classList.add('manager-card');
@@ -36,7 +38,7 @@ async function showVoiceManager() {
     // The name + ID 
     const nameSpan = document.createElement('span');
     nameSpan.classList.add('manager-card-name');
-    nameSpan.textContent = `${name}: ${modelId}`;
+    nameSpan.textContent = `${name}: ${model_id}`;
     card.appendChild(nameSpan);
 
     // Buttons to the right
@@ -48,7 +50,7 @@ async function showVoiceManager() {
     editBtn.classList.add('manager-card-button');
     editBtn.textContent = 'Edit';
     editBtn.addEventListener('click', () => {
-      editVoiceModel(name, modelId);
+      editVoiceModel(name, model_id);
     });
     buttonGroup.appendChild(editBtn);
 
@@ -221,5 +223,6 @@ async function showVoiceManager() {
     }
   }
 }
+
 // Expose to global scope
 window.showVoiceManager = showVoiceManager;

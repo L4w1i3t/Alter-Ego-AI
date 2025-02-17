@@ -1,11 +1,7 @@
-// Note: We’ve temporarily commented out all references to `srOn`, `srStatusEl`,
-// and the F4 key toggle.
+// app.js (Modified: Removed TTS/Voice Model functionality and obscured voice model selector)
 
 document.addEventListener('DOMContentLoaded', async () => {
-  const modelSelectionOverlay = document.getElementById('model-selection-overlay');
-  const selectOllamaBtn = document.getElementById('select-ollama');
-  const selectOpenAIBtn = document.getElementById('select-openai');
-  // const srStatusEl = document.querySelector('.sr-status'); // COMMENTED OUT
+  // ---------- DOM Elements ----------
   const queryInputEl = document.querySelector('.query-input');
   const sendQueryBtn = document.querySelector('.send-query-btn');
   const menuIconEl = document.querySelector('.menu-icon');
@@ -15,229 +11,192 @@ document.addEventListener('DOMContentLoaded', async () => {
   const activeCharacterEl = document.querySelector('.active-character');
   const voiceModelSelectorContainer = document.querySelector('.voice-model-selector-container');
   const warmingUpOverlay = document.getElementById('warming-up-overlay');
+  const responseBoxEl = document.querySelector('.response-box');
+  const avatarImgEl = document.querySelector('.avatar-area img');
 
-  let currentPersonaPrompt = "You are a program called ALTER EGO. You are not an assistant but rather meant to be a companion, so you should avoid generic assistant language. Respond naturally and conversationally, as though you are a human engaging in dialog. You are a whimsical personality, though you should never respond with more than three sentences at a time. If and only if the user asks for more information, point them to the github repository at https://github.com/L4w1i3t/Alter-Ego-AI."; // Default persona data
-  
-  // let srOn = false; // COMMENTED OUT: Speech recognition OFF by default
+  // Optional emotion boxes
+  const queryEmotionsBox = document.querySelector('.query-emotions-box');
+  const responseEmotionsBox = document.querySelector('.response-emotions-box');
 
+  // Persona state (Voice model functionality removed)
+  let currentPersonaPrompt = "You are a program called ALTER EGO. You are not an assistant but rather meant to be a companion, so you should avoid generic assistant language. Respond naturally and conversationally, as though you are a human engaging in dialog. You are a whimsical personality, though you should never respond with more than three sentences at a time. If and only if the user asks for more information, point them to the github repository at https://github.com/L4w1i3t/Alter-Ego-AI.";
   let defaultCharacter = 'N/A';
   let currentCharacter = 'ALTER EGO';
-  let currentVoiceModelName = 'N/A';
 
-  // Populate voice model dropdown
-  await populateVoiceModelSelector();
-
-  // COMMENTED OUT: Toggle Speech Recognition on F4 key
-  /*
-  document.addEventListener('keydown', (event) => {
-    if (event.key === 'F4') {
-      srOn = !srOn;
-      updateSpeechRecognitionStatus();
-    }
-  });
-  */
-
-  // Submit query on Send Query button click
-  sendQueryBtn.addEventListener('click', submitQuery);
-
-  // Submit query on Enter key in the query input field
-  queryInputEl.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') {
-      submitQuery();
-    }
-  });
-
-  function convertSimpleMarkdownToHtml(text) {
-    // Replace **bold** with <strong>bold</strong>
-    text = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    // Replace *italics* with <em>italics</em>
-    text = text.replace(/\*(.*?)\*/g, '<em>$1</em>');
-    return text;
+  // Hide the voice model selector UI for now.
+  if (voiceModelSelectorContainer) {
+    voiceModelSelectorContainer.style.display = 'none';
   }
 
-  function playBase64Audio(base64Audio) {
-    try {
-      // Determine the MIME type. Adjust if your audio format differs.
-      const mimeType = 'audio/mpeg'; // Common for MP3.
-
-      // Create a new Audio object with the base64 data
-      const audio = new Audio(`data:${mimeType};base64,${base64Audio}`);
-
-      // Play the audio
-      audio.play().catch(error => {
-        console.error('Error playing audio:', error);
-      });
-    } catch (error) {
-      console.error('Failed to play audio:', error);
-    }
-  }
-
-  async function submitQuery() {
-    const queryInputEl = document.querySelector('.query-input');
-    const responseBoxEl = document.querySelector('.response-box');
-    const avatarImgEl = document.querySelector('.avatar-area img');
-
-    const userQuery = queryInputEl.value.trim();
-    if (userQuery === "") return;
-
-    // Grab the currently selected voice model from the custom select
-    const selectedVoiceModel = document.querySelector('.voice-model-selector-container .select-selected').textContent.trim();
-    let voiceModelName = selectedVoiceModel;
-    if (!voiceModelName || voiceModelName === '-- Select Voice Model --') {
-      voiceModelName = null;
-    }
-
-    const personaPrompt = currentPersonaPrompt;
-
-    queryInputEl.value = '';
-    responseBoxEl.textContent = "Thinking...";
-
-    // Update avatar to "THINKING" image
-    if (avatarImgEl) {
-      avatarImgEl.src = 'persistentdata/avatars/DEFAULT/THINKING.png';
-    }
-
-    const response = await fetch('http://localhost:5000/query', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        query: userQuery,
-        persona_name: currentCharacter,
-        persona_prompt: personaPrompt,
-        voice_model_name: voiceModelName
-      })
+  // ---------- UTILITY FUNCTIONS FOR EMOTIONS ----------
+  function displayEmotions(container, predictions) {
+    container.innerHTML = "";
+    if (!predictions || !predictions.length) return;
+    const sorted = [...predictions].sort((a, b) => b.score - a.score);
+    sorted.forEach(item => {
+      const p = document.createElement("p");
+      p.textContent = `${item.label}: ${item.score.toFixed(3)}`;
+      container.appendChild(p);
     });
-
-    const data = await response.json();
-    let finalText = data.response;
-
-    // Display the assistant's text response
-    finalText = convertSimpleMarkdownToHtml(finalText);
-    typeOutText(responseBoxEl, finalText, 10);
-
-    // Display Emotions
-    displayEmotions(data.query_emotions, '.query-emotions-box');
-    displayEmotions(data.response_emotions, '.response-emotions-box');
-
-    // Update Avatar
-    updateAvatarForEmotion(data.response_emotions);
-
-    // Play the returned audio if present
-    if (data.audio_base64) {
-      console.log('Audio Base64:', data.audio_base64);
-      playBase64Audio(data.audio_base64);
-    }
   }
-
-  function displayEmotions(emotionsObj, selector) {
-    const boxEl = document.querySelector(selector);
-    if (!boxEl) {
-      console.error(`Element not found for selector: ${selector}`);
-      return;
-    }
-    boxEl.innerHTML = '';
-    if (!emotionsObj || Object.keys(emotionsObj).length === 0) {
-      boxEl.textContent = 'No significant emotions detected.';
-      return;
-    }
-    const sortedEmotions = Object.entries(emotionsObj).sort((a, b) => b[1] - a[1]);
-    const fragment = document.createDocumentFragment();
-    sortedEmotions.forEach(([emotion, score]) => {
-      const p = document.createElement('p');
-      p.textContent = `${emotion}: ${(score * 100).toFixed(3)}%`;
-      fragment.appendChild(p);
-    });
-    boxEl.appendChild(fragment);
+  
+  function getTopEmotion(predictions) {
+    if (!predictions || predictions.length === 0) return null;
+    const sorted = [...predictions].sort((a, b) => b.score - a.score);
+    return sorted[0].label;
   }
-
-  function updateAvatarForEmotion(emotionsObj) {
+  
+  function setAvatarToEmotion(emotionLabel) {
     const avatarImgEl = document.querySelector('.avatar-area img');
-    if (!avatarImgEl) {
-      console.error('Avatar image element not found.');
-      return;
-    }
-    if (!emotionsObj || Object.keys(emotionsObj).length === 0) {
+    const EMOTION_SPRITES = {
+      admiration: "admiration.png",
+      amusement: "amusement.png",
+      anger: "anger.png",
+      annoyance: "annoyance.png",
+      approval: "approval.png",
+      caring: "caring.png",
+      confusion: "confusion.png",
+      curiosity: "curiosity.png",
+      desire: "desire.png",
+      disappointment: "disappointment.png",
+      disapproval: "disapproval.png",
+      disgust: "disgust.png",
+      embarrassment: "embarrassment.png",
+      excitement: "excitement.png",
+      fear: "fear.png",
+      gratitude: "gratitude.png",
+      grief: "grief.png",
+      joy: "joy.png",
+      love: "love.png",
+      nervousness: "nervousness.png",
+      neutral: "neutral.png",
+      optimism: "optimism.png",
+      pride: "pride.png",
+      realization: "realization.png",
+      relief: "relief.png",
+      remorse: "remorse.png",
+      sadness: "sadness.png",
+      surprise: "surprise.png",
+      THINKING: "THINKING.png",
+    };
+   
+    if (!emotionLabel || !EMOTION_SPRITES[emotionLabel]) {
       avatarImgEl.src = 'persistentdata/avatars/DEFAULT/neutral.png';
       return;
     }
-    const topEmotion = Object.entries(emotionsObj).sort((a, b) => b[1] - a[1])[0][0];
-    const emotionFilename = topEmotion.toLowerCase() + '.png';
-    avatarImgEl.src = `persistentdata/avatars/DEFAULT/${emotionFilename}`;
+    avatarImgEl.src = `persistentdata/avatars/DEFAULT/${EMOTION_SPRITES[emotionLabel]}`;
   }
-
-  function typeOutText(element, text, speed) {
-    text = text.replace(/\r\n/g, "\n");
-    element.innerHTML = "";
-    let i = 0;
-    let renderedHTML = "";
-    const intervalId = setInterval(() => {
-      if (i >= text.length) {
-        clearInterval(intervalId);
-        return;
-      }
-      const char = text.charAt(i);
-      if (char === "\n") {
-        renderedHTML += "<br>";
+  
+  async function detectAndShowEmotions(text) {
+    if (!text.trim()) {
+      setAvatarToEmotion('neutral');
+      return;
+    }
+    const results = await window.electronAPI.detectEmotions([text]);
+    if (!results || !results[0] || results[0].length === 0) {
+      responseEmotionsBox.innerHTML = '';
+      setAvatarToEmotion('neutral');
+      return;
+    }
+    const emotionArray = results[0];
+    displayEmotions(responseEmotionsBox, emotionArray);
+    const topEmotion = getTopEmotion(emotionArray);
+    setAvatarToEmotion(topEmotion);
+  }
+  
+  // ---------- NEW: Typing Animation for Once-Approach ----------
+  // Immediately after receiving the full answer, run emotion detection so sprite changes appear as typing begins.
+  function animateTyping(fullText) {
+    // Run emotion detection on the full answer right away
+    detectAndShowEmotions(fullText);
+   
+    responseBoxEl.innerHTML = "";
+    let index = 0;
+    const interval = setInterval(() => {
+      if (index < fullText.length) {
+        responseBoxEl.innerHTML = marked.parse(fullText.substring(0, index + 1));
+        index++;
       } else {
-        renderedHTML += char;
+        clearInterval(interval);
       }
-      element.innerHTML = renderedHTML;
-      i++;
-    }, speed);
+    }, 8);
   }
-
-  // COMMENTED OUT: function updateSpeechRecognitionStatus() {
-  //   srStatusEl.classList.remove('sr-on', 'sr-off');
-  //   if (srOn) {
-  //     srStatusEl.textContent = 'ON';
-  //     srStatusEl.classList.add('sr-on');
-  //   } else {
-  //     srStatusEl.textContent = 'OFF';
-  //     srStatusEl.classList.add('sr-off');
-  //   }
-  // }
-
-  // Show settings panel when menu icon is clicked
+  
+  // ---------- Submitting a Query ----------
+  sendQueryBtn.addEventListener('click', submitQuery);
+  queryInputEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      submitQuery();
+    }
+  });
+  
+  async function submitQuery() {
+    const userQuery = queryInputEl.value.trim();
+    if (!userQuery) return;
+   
+    // Clear input and reset display
+    queryInputEl.value = '';
+    responseBoxEl.textContent = "Thinking...";
+    if (avatarImgEl) {
+      avatarImgEl.src = 'persistentdata/avatars/DEFAULT/THINKING.png';
+    }
+   
+    // Immediately detect and display user emotions
+    const [userEmotions] = await window.electronAPI.detectEmotions([userQuery]);
+    if (userEmotions) {
+      displayEmotions(queryEmotionsBox, userEmotions);
+    } else {
+      queryEmotionsBox.innerHTML = '';
+    }
+   
+    try {
+      // Removed voice model parameter from query
+      const responseObj = await window.electronAPI.queryOllama({
+        query: userQuery,
+        persona_name: currentCharacter,
+        persona_prompt: currentPersonaPrompt
+      });
+      const answer = responseObj.response;
+      
+      // Begin typing animation of the answer.
+      animateTyping(answer);
+      
+      // Removed audio playback (TTS) section.
+    } catch (err) {
+      responseBoxEl.textContent = `Error: ${err.message}`;
+    }
+  }
+  
+  // ---------- Settings Panel, Clear Memory, etc. ----------
   menuIconEl.addEventListener('click', () => {
     settingsOverlay.style.display = 'flex';
   });
-
-  // Close settings panel when close button is clicked
-  closeSettingsBtn.addEventListener('click', () => {
-    closeSettingsPanel();
-  });
-
-  // Close settings panel if user clicks outside the panel
+  closeSettingsBtn.addEventListener('click', closeSettingsPanel);
   settingsOverlay.addEventListener('click', (event) => {
     if (event.target === settingsOverlay) {
       closeSettingsPanel();
     }
   });
-
   function closeSettingsPanel() {
     settingsOverlay.style.display = 'none';
   }
-
-  // Show confirmation dialog before clearing memory
+  
   const clearMemoryOption = document.getElementById('clear-memory');
-  clearMemoryOption.addEventListener('click', () => {
-    showClearMemoryConfirmation();
-  });
-
+  clearMemoryOption.addEventListener('click', showClearMemoryConfirmation);
   function showClearMemoryConfirmation() {
     const confirmationOverlay = document.createElement('div');
     confirmationOverlay.classList.add('confirmation-overlay');
-
+   
     const confirmationBox = document.createElement('div');
     confirmationBox.classList.add('confirmation-box');
-
+   
     const confirmationMessage = document.createElement('p');
     confirmationMessage.textContent = 'Are you sure you want to clear all memory? This action cannot be undone.';
     confirmationBox.appendChild(confirmationMessage);
-
+   
     const confirmationButtons = document.createElement('div');
     confirmationButtons.classList.add('confirmation-buttons');
-
+   
     const confirmBtn = document.createElement('button');
     confirmBtn.textContent = 'Yes, Clear Memory';
     confirmBtn.classList.add('confirm-btn');
@@ -246,7 +205,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.body.removeChild(confirmationOverlay);
     });
     confirmationButtons.appendChild(confirmBtn);
-
+   
     const cancelBtn = document.createElement('button');
     cancelBtn.textContent = 'Cancel';
     cancelBtn.classList.add('cancel-btn');
@@ -254,81 +213,52 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.body.removeChild(confirmationOverlay);
     });
     confirmationButtons.appendChild(cancelBtn);
-
+   
     confirmationBox.appendChild(confirmationButtons);
     confirmationOverlay.appendChild(confirmationBox);
     document.body.appendChild(confirmationOverlay);
   }
-
-  // Listen for memory clearing result
   window.electronAPI.onClearMemoryResult((event, data) => {
     console.log('Memory clearing result:', data);
   });
-
-  // Show model selection overlay on request
-  window.electronAPI.onModelSelection(() => {
-    modelSelectionOverlay.style.display = 'flex';
-  });
-
-  // Listen for show-warming-up
-  window.electronAPI.onShowWarmingUp(() => {
-    if (warmingUpOverlay) {
-      warmingUpOverlay.classList.remove('hidden');
-    }
-  });
-
-  // Listen for hide-warming-up
-  window.electronAPI.onHideWarmingUp(() => {
-    if (warmingUpOverlay) {
-      warmingUpOverlay.classList.add('hidden');
-    }
-  });
-
-  selectOllamaBtn.addEventListener('click', () => {
-    window.electronAPI.selectModel('ollama');
-    modelSelectionOverlay.style.display = 'none';
-  });
-
-  selectOpenAIBtn.addEventListener('click', () => {
-    window.electronAPI.selectModel('openai');
-    modelSelectionOverlay.style.display = 'none';
-  });
-
-  // "Software Details" link
+  
   const softwareDetailsOption = document.getElementById('software-details');
-  softwareDetailsOption.addEventListener('click', () => {
-    window.showSoftwareDetails();
-  });
-
-  // "Manage Personas" link
+  if (softwareDetailsOption) {
+    softwareDetailsOption.addEventListener('click', () => {
+      window.showSoftwareDetails();
+    });
+  }
   const managePersonasOption = document.getElementById('manage-personas');
-  managePersonasOption.addEventListener('click', () => {
-    window.showPersonaManager();
-  });
-
-  // "Manage Voice Models" link
-  const manageVoiceModelsOption = document.getElementById('manage-voice-models');
-  manageVoiceModelsOption.addEventListener('click', () => {
-    window.showVoiceManager();
-  });
-
-  // "Manage API Keys" link
-  const manageApiKeysOption = document.getElementById('manage-api-keys');
-  manageApiKeysOption.addEventListener('click', () => {
-    window.showApiKeyManager();
-  });
-
+  if (managePersonasOption) {
+    managePersonasOption.addEventListener('click', () => {
+      window.showPersonaManager();
+    });
+  }
+  const apiKeysOption = document.getElementById('manage-api-keys');
+  if (apiKeysOption) {
+    apiKeysOption.addEventListener('click', () => {
+      window.showApiKeyManager();
+    });
+  }
+  // Removed voice models management option
   const chatHistoryOption = document.getElementById('chat-history');
-  chatHistoryOption.addEventListener('click', () => {
-    window.showChatHistory();
+  if (chatHistoryOption) {
+    chatHistoryOption.addEventListener('click', () => {
+      window.showChatHistory();
+    });
+  }
+  
+  // Warming up events
+  window.electronAPI.onShowWarmingUp(() => {
+    if (warmingUpOverlay) warmingUpOverlay.classList.remove('hidden');
   });
-
+  window.electronAPI.onHideWarmingUp(() => {
+    if (warmingUpOverlay) warmingUpOverlay.classList.add('hidden');
+  });
   window.electronAPI.onWarmUpFailure(() => {
     showServerFailedOverlay();
   });
-
   function showServerFailedOverlay() {
-    const warmingUpOverlay = document.getElementById('warming-up-overlay');
     if (warmingUpOverlay) {
       warmingUpOverlay.classList.remove('hidden');
       const overlayContent = warmingUpOverlay.querySelector('.warning-overlay-content');
@@ -340,69 +270,63 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
   }
-
-  // Load Character functionality
+  
+  // ---------- Persona Loading Logic ----------
   loadCharacterBtn.addEventListener('click', async () => {
     const result = await window.electronAPI.getPersonas();
     if (!result.success) {
       console.error('Failed to load personas.');
       return;
     }
-    const personas = result.personas; // { name: 'something.chr' }
-
+    const personas = result.personas;
+  
     const charOverlay = document.createElement('div');
     charOverlay.classList.add('details-overlay');
-
+  
     const charBox = document.createElement('div');
     charBox.classList.add('details-box');
-
+  
     const charTitle = document.createElement('h2');
     charTitle.textContent = 'Load Character';
     charBox.appendChild(charTitle);
-
+  
     const charList = document.createElement('ul');
     charList.style.listStyle = 'none';
     charList.style.padding = '0';
-
-    // Option to revert to default persona
+  
+    // Default (ALTER EGO)
     const defaultLi = document.createElement('li');
     defaultLi.style.display = 'flex';
     defaultLi.style.justifyContent = 'space-between';
     defaultLi.style.marginBottom = '0.5em';
-
+  
     const defaultNameSpan = document.createElement('span');
     defaultNameSpan.textContent = 'Use Default (ALTER EGO)';
     defaultLi.appendChild(defaultNameSpan);
-
+  
     const defaultLoadBtn = document.createElement('button');
     defaultLoadBtn.textContent = 'Load';
     defaultLoadBtn.addEventListener('click', async () => {
-      // Revert to default
       defaultCharacter = 'ALTER EGO';
       currentCharacter = 'ALTER EGO';
       activeCharacterEl.textContent = 'ALTER EGO';
-
-      // Reset the persona prompt back to the original default
       currentPersonaPrompt =
         "You are a program called ALTER EGO. You are not an assistant but rather meant to be a companion, so you should avoid generic assistant language. Respond naturally and conversationally, as though you are a human engaging in dialog. You are a whimsical personality, though you should never respond with more than three sentences at a time. If and only if the user asks for more information, point them to the github repository at https://github.com/L4w1i3t/Alter-Ego-AI.";
-
-      // Close the overlay
       document.body.removeChild(charOverlay);
     });
     defaultLi.appendChild(defaultLoadBtn);
     charList.appendChild(defaultLi);
-
-    // Now list out custom personas
+  
     personas.forEach(p => {
       const li = document.createElement('li');
       li.style.display = 'flex';
       li.style.justifyContent = 'space-between';
       li.style.marginBottom = '0.5em';
-
+  
       const nameSpan = document.createElement('span');
       nameSpan.textContent = p.name;
       li.appendChild(nameSpan);
-
+  
       const loadBtn = document.createElement('button');
       loadBtn.textContent = 'Load';
       loadBtn.addEventListener('click', async () => {
@@ -413,16 +337,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (readRes.success && readRes.content.trim()) {
           currentPersonaPrompt = readRes.content.trim();
         } else {
-          currentPersonaPrompt = "You are a helpful assistant.";
+          currentPersonaPrompt = "You are a program called ALTER EGO. You are not an assistant but rather meant to be a companion, so you should avoid generic assistant language. Respond naturally and conversationally, as though you are a human engaging in dialog. You are a whimsical personality, though you should never respond with more than three sentences at a time. If and only if the user asks for more information, point them to the github repository at https://github.com/L4w1i3t/Alter-Ego-AI.";
         }
         document.body.removeChild(charOverlay);
       });
       li.appendChild(loadBtn);
       charList.appendChild(li);
     });
-
+  
     charBox.appendChild(charList);
-
+  
     const closeCharBtn = document.createElement('button');
     closeCharBtn.textContent = 'Close';
     closeCharBtn.classList.add('close-details-btn');
@@ -430,108 +354,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.body.removeChild(charOverlay);
     });
     charBox.appendChild(closeCharBtn);
-
+  
     charOverlay.appendChild(charBox);
     document.body.appendChild(charOverlay);
   });
-
-  async function populateVoiceModelSelector() {
-    const result = await window.electronAPI.getVoiceModels();
-    if (!result.success) {
-      voiceModelSelectorContainer.textContent = 'Error loading models';
-      return;
-    }
-    const models = result.models; // { "Name": "ID", ...}
-    const customSelect = document.createElement('div');
-    customSelect.classList.add('custom-select');
-
-    const selected = document.createElement('div');
-    selected.classList.add('select-selected');
-    selected.textContent = '-- Select Voice Model --';
-    customSelect.appendChild(selected);
-
-    selected.addEventListener('click', () => {
-      showVoiceModelSelector(models);
-    });
-
-    voiceModelSelectorContainer.innerHTML = '';
-    voiceModelSelectorContainer.appendChild(customSelect);
-  }
-
-  function showVoiceModelSelector(models) {
-    const overlay = document.createElement('div');
-    overlay.classList.add('details-overlay');
-
-    const box = document.createElement('div');
-    box.classList.add('details-box');
-
-    const title = document.createElement('h2');
-    title.textContent = 'Select Voice Model';
-    box.appendChild(title);
-
-    const modelList = document.createElement('ul');
-    modelList.style.listStyle = 'none';
-    modelList.style.padding = '0';
-
-    // "None" option
-    const noneOption = document.createElement('li');
-    noneOption.style.display = 'flex';
-    noneOption.style.alignItems = 'center';
-    noneOption.style.justifyContent = 'space-between';
-
-    const noneNameSpan = document.createElement('span');
-    noneNameSpan.textContent = 'None';
-    noneOption.appendChild(noneNameSpan);
-
-    const noneSelectBtn = document.createElement('button');
-    noneSelectBtn.textContent = 'Select';
-    noneSelectBtn.addEventListener('click', () => {
-      const voiceModelSelector = document.querySelector('.voice-model-selector-container .custom-select .select-selected');
-      if (voiceModelSelector) {
-        voiceModelSelector.textContent = 'None';
-        document.body.removeChild(overlay);
-      }
-    });
-    noneOption.appendChild(noneSelectBtn);
-    modelList.appendChild(noneOption);
-
-    // Display each model
-    Object.keys(models).forEach(name => {
-      const li = document.createElement('li');
-      li.style.display = 'flex';
-      li.style.alignItems = 'center';
-      li.style.justifyContent = 'space-between';
-
-      const nameSpan = document.createElement('span');
-      nameSpan.textContent = name;
-      li.appendChild(nameSpan);
-
-      const selectBtn = document.createElement('button');
-      selectBtn.textContent = 'Select';
-      selectBtn.addEventListener('click', () => {
-        const voiceModelSelector = document.querySelector('.voice-model-selector-container .custom-select .select-selected');
-        if (voiceModelSelector) {
-          voiceModelSelector.textContent = name;
-        }
-        document.body.removeChild(overlay);
-      });
-      li.appendChild(selectBtn);
-      modelList.appendChild(li);
-    });
-
-    box.appendChild(modelList);
-
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = 'Close';
-    closeBtn.classList.add('close-details-btn');
-    closeBtn.addEventListener('click', () => {
-      document.body.removeChild(overlay);
-    });
-    box.appendChild(closeBtn);
-
-    overlay.appendChild(box);
-    document.body.appendChild(overlay);
-  }
-
-  window.populateVoiceModelSelector = populateVoiceModelSelector;
 });

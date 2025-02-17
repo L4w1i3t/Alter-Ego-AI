@@ -1,3 +1,6 @@
+// clear_memory.js
+// Node-based script – do NOT load in index.html
+
 const fs = require('fs');
 const path = require('path');
 
@@ -6,25 +9,25 @@ const memoryDatabasesPath = path.join(__dirname, '../../persistentdata/memory_da
 
 // Function to clear the memory_databases folder
 function clearMemory() {
-    return new Promise((resolve, reject) => {
-        fs.rm(memoryDatabasesPath, { recursive: true, force: true }, (err) => {
-            if (err) {
-                console.error('Error clearing the memory_databases directory:', err);
-                return reject(err);
-            }
-            console.log('Cleared the memory_databases directory.');
+  return new Promise((resolve, reject) => {
+    fs.rm(memoryDatabasesPath, { recursive: true, force: true }, (err) => {
+      if (err) {
+        console.error('Error clearing the memory_databases directory:', err);
+        return reject(err);
+      }
+      console.log('Cleared the memory_databases directory.');
 
-            // Recreate the memory_databases folder
-            fs.mkdir(memoryDatabasesPath, { recursive: true }, (err) => {
-                if (err) {
-                    console.error('Error creating the memory_databases directory:', err);
-                    return reject(err);
-                }
-                console.log('Recreated the memory_databases directory.');
-                resolve();
-            });
-        });
+      // Recreate the memory_databases folder
+      fs.mkdir(memoryDatabasesPath, { recursive: true }, (err) => {
+        if (err) {
+          console.error('Error creating the memory_databases directory:', err);
+          return reject(err);
+        }
+        console.log('Recreated the memory_databases directory.');
+        resolve();
+      });
     });
+  });
 }
 
 module.exports = { clearMemory };

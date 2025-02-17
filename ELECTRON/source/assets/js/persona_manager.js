@@ -1,3 +1,4 @@
+// persona_manager.js
 async function showPersonaManager() {
   const result = await window.electronAPI.getPersonas();
   if (!result.success) {
@@ -5,7 +6,7 @@ async function showPersonaManager() {
     return;
   }
 
-  const personas = result.personas; // e.g. [{ name: "Historian.chr" }, ... ]
+  const personas = result.personas; // e.g. [{ name: "Historian.chr" }, ...]
 
   // Dark overlay
   const overlay = document.createElement('div');
@@ -200,7 +201,6 @@ async function showPersonaManager() {
   }
 
   async function deletePersona(filename) {
-    // No confirm() call, just proceed
     const res = await window.electronAPI.deletePersona(filename);
     if (res.success) {
       console.log('Persona deleted successfully.');
@@ -211,5 +211,5 @@ async function showPersonaManager() {
     }
   }
 }
-// Expose to global scope
+
 window.showPersonaManager = showPersonaManager;

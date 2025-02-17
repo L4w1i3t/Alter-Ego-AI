@@ -1,3 +1,4 @@
+// api_key_manager.js
 async function showApiKeyManager() {
   const result = await window.electronAPI.getApiKeys();
   if (!result.success) {
@@ -5,7 +6,7 @@ async function showApiKeyManager() {
     return;
   }
 
-  const keys = result.keys; // e.g. { "OPENAI_API_KEY": "...", "ELEVENLABS_API_KEY": "..." }
+  const keys = result.keys; // e.g. { "ELEVENLABS_API_KEY": "..." }
 
   // Create the dark overlay
   const overlay = document.createElement('div');
@@ -14,7 +15,7 @@ async function showApiKeyManager() {
   // Create the main box
   const box = document.createElement('div');
   box.classList.add('details-box');
-  box.classList.add('api-keys-box'); // extra class to style distinctly
+  box.classList.add('api-keys-box');
 
   // Title
   const title = document.createElement('h2');
@@ -31,21 +32,19 @@ async function showApiKeyManager() {
   const keyListContainer = document.createElement('div');
   keyListContainer.classList.add('api-key-list-container');
 
-  // For each key in `keys`
+  // For each key in `keys`, excluding OpenAI keys
   Object.keys(keys).forEach((keyName) => {
+    if (keyName === 'OPENAI_API_KEY') return;
     const keyValue = keys[keyName];
 
-    // Parent wrapper for each key row/card
     const card = document.createElement('div');
     card.classList.add('api-key-card');
 
-    // Left column: Name
     const nameSpan = document.createElement('span');
     nameSpan.classList.add('api-key-card-name');
     nameSpan.textContent = keyName + ':';
     card.appendChild(nameSpan);
 
-    // Middle column: masked or unmasked key
     let showingFull = false;
     const maskedKey = maskKey(keyValue);
     const keySpan = document.createElement('span');
@@ -53,11 +52,9 @@ async function showApiKeyManager() {
     keySpan.textContent = maskedKey;
     card.appendChild(keySpan);
 
-    // Button group container
     const buttonGroup = document.createElement('div');
     buttonGroup.classList.add('api-key-card-buttons');
 
-    // Show/Hide toggle
     const toggleBtn = document.createElement('button');
     toggleBtn.classList.add('api-key-card-button');
     toggleBtn.textContent = 'Show';
@@ -73,7 +70,6 @@ async function showApiKeyManager() {
     });
     buttonGroup.appendChild(toggleBtn);
 
-    // Copy button
     const copyBtn = document.createElement('button');
     copyBtn.classList.add('api-key-card-button');
     copyBtn.textContent = 'Copy';
@@ -85,7 +81,6 @@ async function showApiKeyManager() {
     });
     buttonGroup.appendChild(copyBtn);
 
-    // Edit button
     const editBtn = document.createElement('button');
     editBtn.classList.add('api-key-card-button');
     editBtn.textContent = 'Edit';
@@ -94,17 +89,12 @@ async function showApiKeyManager() {
     });
     buttonGroup.appendChild(editBtn);
 
-    // Append button group
     card.appendChild(buttonGroup);
-
-    // Finally, add this card to the container
     keyListContainer.appendChild(card);
   });
 
-  // Put key-list container into the box
   box.appendChild(keyListContainer);
 
-  // Close panel button
   const closeBtn = document.createElement('button');
   closeBtn.textContent = 'Close';
   closeBtn.classList.add('close-details-btn');
@@ -113,11 +103,9 @@ async function showApiKeyManager() {
   });
   box.appendChild(closeBtn);
 
-  // Add box to overlay, and overlay to DOM
   overlay.appendChild(box);
   document.body.appendChild(overlay);
 
-  // Masks a key, e.g. "sk-pr...BgA"
   function maskKey(key) {
     if (key.length <= 10) {
       return key[0] + '...' + key[key.length - 1];
@@ -127,7 +115,6 @@ async function showApiKeyManager() {
     return start + '...' + end;
   }
 
-  // Open a form to edit a specific key
   async function editApiKey(keyName, oldValue) {
     const formOverlay = document.createElement('div');
     formOverlay.classList.add('details-overlay');
@@ -171,8 +158,8 @@ async function showApiKeyManager() {
         console.log('API Key updated successfully.');
         document.body.removeChild(formOverlay);
         document.body.removeChild(overlay);
-        showApiKeyManager(); // Refresh list
-        showRestartNotification(); // Show restart notice
+        showApiKeyManager();
+        showRestartNotification();
       } else {
         console.error(res.message);
       }
@@ -192,7 +179,6 @@ async function showApiKeyManager() {
     document.body.appendChild(formOverlay);
   }
 
-  // Show a “restart required” message
   function showRestartNotification() {
     const notificationOverlay = document.createElement('div');
     notificationOverlay.classList.add('details-overlay');
@@ -222,5 +208,4 @@ async function showApiKeyManager() {
   }
 }
 
-// Expose showApiKeyManager globally
 window.showApiKeyManager = showApiKeyManager;

@@ -9,19 +9,13 @@
 </head>
 <body>
 
-  <div id="model-selection-overlay" class="overlay">
-    <div class="overlay-content">
-      <h1>Choose Language Model.</h1>
-      <h2>If unsure, select Ollama.</h2>
-      <button id="select-ollama">Ollama</button>
-      <button id="select-openai">OpenAI</button>
-    </div>
-  </div>
+  <!-- Removed model-selection-overlay -->
 
   <div id="warming-up-overlay" class="warning-overlay hidden">
     <div class="warning-overlay-content">
       <h1>Warming up, please wait...</h1>
-      <h2>This'll take about a few seconds.</h2>
+      <h2>This'll take a few seconds.</h2>
+      <h2>If you're running for the first time, this will take a couple minutes.</h2>
     </div>
   </div>
 
@@ -29,7 +23,7 @@
   <div class="splash-screen">
     <img src="assets/gui/samplesplash.png" alt="Splash Screen">
     <div class="splash-loading-container">
-        <div class="splash-loading-bar"></div>
+      <div class="splash-loading-bar"></div>
     </div>
   </div>
 
@@ -57,40 +51,40 @@
         <div class="query-emotions-section">
           <h3>DETECTED USER EMOTIONS:</h3>
           <div class="query-emotions-box">
+            <!--<p style="color: red;">Currently Unavailable</p>-->
           </div>
         </div>
         <div class="response-emotions-section">
           <h3>DETECTED RESPONSE EMOTIONS:</h3>
           <div class="response-emotions-box">
+            <!--<p style="color: red;">Currently Unavailable</p>-->
           </div>
         </div>
       </div>
     </div>
     <div class="avatar-area">
-      <img src="persistentdata/avatars/DEFAULT/neutral.png" alt="Avatar" /> <!-- Hard coded static avatar for now. -->
+      <img src="persistentdata/avatars/DEFAULT/neutral.png" alt="Avatar" />
     </div>
   </main>
 
   <!-- Footer Section -->
   <footer class="footer">
     <div class="footer-left">
-      <span>Voice Model: <span class="voice-model-selector-container">Loading...</span><br/></span>
-      <!-- <span>Speech Recognition (F4): <span class="sr-status sr-off">OFF</span></span> --> <!-- Speech Recognition disabled for now. -->
+      <!--<span>Voice Model: <span class="voice-model-selector-container">Loading...</span><br/></span>-->
     </div>
     <div class="footer-right">
       Active Character: <span class="active-character">ALTER EGO</span>
     </div>
   </footer>
   
-
   <!-- Settings Panel (hidden by default) -->
   <div class="settings-overlay">
     <div class="settings-panel">
       <button class="close-settings-btn">X</button>
       <h2>Settings</h2>
       <ul>
-        <li id="manage-api-keys">Manage API Keys</li>
-        <li id="manage-voice-models">Manage Voice Models</li>
+        <!--<li id="manage-api-keys">Manage API Keys</li>-->
+        <!--<li id="manage-voice-models">Manage Voice Models</li>-->
         <li id="manage-personas">Manage Personas</li>
         <li id="chat-history">Chat History</li>
         <li id="clear-memory">Clear Memory</li>
@@ -99,16 +93,14 @@
       </ul>
     </div>
   </div>
-
+  
   <script src="assets/js/software_details.js"></script>
   <script src="assets/js/persona_manager.js"></script>
   <script src="assets/js/voice_manager.js"></script>
-  <script src="assets/js/clear_memory.js"></script>
   <script src="assets/js/api_key_manager.js"></script>
-  <script src="assets/js/avatar.js"></script>
-  <script src="assets/js/memory_manager.js"></script>
   <script src="assets/js/chat_history.js"></script>
   <script src="assets/js/splash.js"></script>
   <script src="assets/js/app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </body>
 </html>

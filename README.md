@@ -8,7 +8,7 @@
 
 # ALTER EGO
 
-ALTER EGO is an interactive digital AI interface that brings any personality to life. Converse, learn, or just have fun chatting with historical figures, fictional characters, or entirely new creations. Leveraging state‐of‐the‐art language models, emotion detection, dynamic avatars, and realistic voice synthesis, ALTER EGO is designed to provide a rich, engaging user experience.
+ALTER EGO is an Electron-based AI interface for creating and conversing with digital personas. The system uses a local Llama-based model via Ollama for text generation and employs an ONNX version of roberta-base-go_emotions for emotion detection. The application is designed to offer an engaging experience with dynamic personas, emotion-tracking avatars, and persistent chat histories.
 
 ***CURRENT VERSION: Alpha 1.0***
 
@@ -21,7 +21,7 @@ ALTER EGO is an interactive digital AI interface that brings any personality to 
 - [Setup](#setup)
 - [Usage](#usage)
 - [Known Issues](#known-issues)
-- [Optimizations & Future Improvements](#optimizations--future-improvements)
+- [Future Plans](#future-plans)
 - [Legal](#legal)
 - [Credits](#credits)
 - [Contact](#contact)
@@ -30,7 +30,13 @@ ALTER EGO is an interactive digital AI interface that brings any personality to 
 
 ## About ALTER EGO
 
-ALTER EGO is an AI platform built with Electron and Python that transforms how you interact with digital personas. The application leverages modern NLP models, emotion detection via roberta-base-go_emotions, and realistic voice synthesis via ElevenLabs to offer a seamless conversation experience. You can choose between two language model backends—OpenAI GPT or Ollama—with Ollama enabled by default—and manage a persistent conversation memory using JSON and FAISS-based storage.
+Originally combining Electron with Python backends and ElevenLabs TTS, ALTER EGO now operates purely under Electron/Node. It runs a local Llama-based model via Ollama’s binaries—allowing offline or private usage—and integrates roberta-base-go_emotions for emotion detection. Text-to-Speech and speech recognition are currently disabled, though references remain in the code for potential reactivation in future versions.
+
+**Tech Stack**
+- Electron (Node/JavaScript)
+- Local Llama-based Model: artifish/llama3.2-uncensored loaded through Ollama
+- Hugging Face Transformers (ONNX) for emotion detection
+- Persistent Data: JSON-based chat logs (per persona), local persona .chr files
 
 ---
 
@@ -39,48 +45,30 @@ ALTER EGO is an AI platform built with Electron and Python that transforms how y
 - **Customizable Personalities**:  
   Create, load, and switch between various personas. In addition to your custom characters, you can always revert to the default “ALTER EGO” persona.
 
-- **Backend Model Selection**:  
-  Choose your preferred language model backend:
-  - **Ollama**: Open-source and zero-cost by default (lightweight as of now, with further testing and optimizations planned.)
-  - **OpenAI GPT**: Robust responses (requires valid API key and is billed on a by-token basis. Use Responsibly.)
-
-- **Dynamic Conversation Memory**:  
-  Conversations are stored persistently (using JSON files and FAISS for indexing) to enable context-aware responses and retrieval of chat history.
-
-- **Realistic Voice Generation**:  
-  Enjoy lifelike responses via ElevenLabs text-to-speech synthesis.
+- **Local Llama Model Integration (Ollama)**
+  By default, ALTER EGO uses a local Llama-based model. On first run, the Ollama executable pulls and caches the required model artifacts.
 
 - **Emotion Detection & Dynamic Avatars**:  
   An embedded roberta-base-go_emotions model detects emotional cues from both your inputs and the assistant’s responses, with the avatar updating dynamically to reflect the current emotional tone.
+  
+- **Persistent Chat History**:  
+  Each persona’s conversation history is saved in simple JSON files, so you can revisit or review any persona’s logs at any time.
 
-- **Built-In Setup Wizard & Management Tools**:  
-  A setup wizard checks for dependencies (including Python, required models, and packages) and auto-installs missing components where possible. In-app menus let you manage API keys, voice models, personas, and view chat history.
-
-- **Platform Support**:  
-  *Currently, only a Windows build is officially available.* Linux-specific details have not yet been fully ironed out, but future updates and testing are planned to enhance cross-platform compatibility.
+- **Built-In Manager UIs**:  
+  Manage personas, view chat history, clear memory, and more via in-app overlay panels.
 
 ---
 
 ## Setup
 
-ALTER EGO is designed to be portable and run “out of the box.” When you first launch the application, a setup wizard will perform several checks:
+ALTER EGO is designed to be portable and run “out of the box.” When you first launch the application, the splash screen will pull necessary artifacts and dependencies automatically (this may take a few minutes.)
 
-- **Python Environment**:  
-  - On Windows, an embedded Python executable is used.
-  - On Linux, the wizard attempts to locate system Python (or install Python3 if needed).
-
-- **Dependency Installation**:  
-  The wizard ensures that required packages (listed in `requirements.txt`) are installed and that local language models (for Ollama, roberta-base-go_emotions, and sentence-transformers) are downloaded and cached.
-
-- **Ollama Model Setup**:  
-  A temporary Ollama server is started to pull the necessary base language model. Once complete, the server is terminated.
-
-Once the wizard finishes, you’re ready to use ALTER EGO!
+Once the pull finishes, you’re ready to use ALTER EGO!
 
 **Prerequisites**:
 - Basic technical familiarity with language models and API integrations.
-- Valid API keys for OpenAI and ElevenLabs if you wish to access those services.
-- A capable system (GPU recommended for heavier loads).
+- At least 8GB of storage.
+- A capable system (I'll be frank, this needs testing).
 
 If you encounter any issues during setup, please open an issue in the repository.
 
@@ -91,8 +79,8 @@ If you encounter any issues during setup, please open an issue in the repository
 1. **Launch the Application**:  
    Run the main script (e.g. your packaged ALTEREGO.exe) to launch ALTER EGO.
 
-2. **Select Language Model**:  
-   A popup will allow you to choose between the Ollama engine (default) and OpenAI GPT's API.
+2. **Let the splash screen run**:  
+   This is necessary
 
 3. **Manage Personas**:  
    - Use the “Load Character” button to choose a custom persona or select the built-in “ALTER EGO” default.
@@ -100,42 +88,43 @@ If you encounter any issues during setup, please open an issue in the repository
 
 4. **Initiate Conversation**:  
    - Type your message into the query box and press Enter or click “Send Query.”
-   - The assistant processes your query using the selected language model and responds with text and synthesized voice.
+   - The program processes your query using the selected language model and responds with markdown text.
 
 5. **View Dynamic Responses**:  
    - Emotion detection results are displayed.
    - The avatar updates to reflect the emotional tone of the conversation.
 
-6. **Additional Tools**:  
-   The settings panel includes options to manage API keys, voice models, view chat history, and clear conversation memory.
-
-*Note: Speech recognition is currently disabled and hidden from the UI until fully implemented.*
-
 ---
 
 ## Known Issues
 
-- **Speech Recognition**:  
-  Speech recognition functionality is currently disabled. Input is text-based only.
+- **No TTS / Speech Recognition**:  
+  Voice features have been removed or disabled in this alpha release, as some backend logic is being overhauled.
 
-- **Linux Support**:  
-  At this time, only a Windows build is officially available as Linux-specific details have not yet been fully resolved.
+- **Windows-Focused**:  
+  Limited testing has been done on other platforms. Ollama is also somewhat platform-specific; building from source on macOS or Linux requires additional steps not yet fully documented here.
+
+- **Model Instabilities**:
+  The included model may produce repetitive or incoherent replies, as this is a relatively lightweight model currently used for testing purposes. Tweaking or swapping the base model might require advanced steps or a custom build.
+
+- **Memory Mechanisms**:
+  While chat logs persist, short-term or vector-based memory is not fully implemented in this alpha; references to FAISS usage are placeholders left from earlier versions.
 
 - **Resource Usage**:  
   Heavy language models or context windows may strain system resources. Future updates will focus on optimizing performance.
 
 ---
 
-## Optimizations & Future Improvements
+## Future Plans
 
-- **Performance Testing & Optimizations**:  
-  Further testing is planned to optimize the Python server, language models, and overall UI responsiveness. This is a key reason why the current Ollama model is kept relatively lightweight (and quite inaccurate or incoherent). Expect improvements in caching, asynchronous processing, and resource management in future updates.
+- **Reintroduce missing features**:
+  Add back TTS and SR logic that minimizes latency.
+
+- **Extend Memory**:
+  Expand conversation memory with short-term retrieval or vector databases, once the local approach stabilizes.
 
 - **Enhanced Cross-Platform Support**:  
   While the Windows build is primary for now, additional work is planned to refine Linux support, including packaging and system-specific optimizations.
-
-- **Additional Features**:  
-  Upcoming enhancements include robust speech recognition, extended conversation memory, and more refined emotion detection and avatar dynamics.
 
 ---
 
@@ -149,16 +138,15 @@ There will eventually be detailed tutorials on setting up API keys, loading and 
 
 By using ALTER EGO, you agree to the following:
 
-- **API Terms of Service**:
-  - OpenAI: [Terms](https://openai.com/policies/terms-of-use)
-  - ElevenLabs: [Terms](https://elevenlabs.io/terms)
-
 - **Content Responsibility**:
   - Users are responsible for ensuring that generated content complies with applicable laws.
   - Do not use the software for harmful, unethical, or illegal activities.
 
 - **Intellectual Property**:
   - Respect copyrights and trademarks when creating or interacting with personas.
+
+- **Third-Party Tools**:
+  - Ollama, roberta-base-go_emotions, Node/Electron, etc. remain the property of their respective authors.
 
 - **Privacy**:
   - Be cautious when sharing personal data. The developer is not liable for data breaches resulting from misuse.
@@ -167,18 +155,14 @@ By using ALTER EGO, you agree to the following:
 
 ## Credits
 
-- **OpenAI GPT**: [OpenAI](https://openai.com)
 - **Ollama**: [Ollama GitHub](https://github.com/ollama/ollama)
-- **ElevenLabs**: [ElevenLabs](https://www.elevenlabs.io)
 - **roberta-base-go_emotions**: [Hugging Face](https://huggingface.co/SamLowe/roberta-base-go_emotions)
-- **Sentence-Transformers (MiniLM-L6-v2)**: [Hugging Face](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2)
-- **FAISS**: [FAISS GitHub](https://github.com/facebookresearch/faiss)
 - **Electron & NodeJS**: [Electron](https://electronjs.org)
 
 ---
 
 ## Contact
 
-For questions, suggestions, or contributions, please open an issue on the repository. Please note that I am a very busy person and may not always be immediately available, but I will do my best to respond and communicate.
+Please open an issue or pull request if you find bugs or want to contribute. Due to a busy schedule and being a one-man team, responses may not be immediate, but all feedback is welcome. Enjoy experimenting with ALTER EGO, and thank you for your understanding as the project evolves.
 
 ---

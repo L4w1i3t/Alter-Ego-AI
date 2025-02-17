@@ -23,6 +23,56 @@ img {
   pointer-events: none; /* Prevents any mouse events on images */
 }
 
+.splash-screen {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  transition: opacity 0.5s ease-in-out;
+  overflow: hidden;
+}
+
+.splash-screen img {
+  width: 100vw;
+  height: 100vh;
+  object-fit: cover;
+  position: absolute;
+  top: 0; left: 0;
+  /* Possibly add a lower z-index so the bar/text is on top */
+  z-index: 1;
+}
+
+.splash-loading-container {
+  position: relative;
+  z-index: 2; /* On top of the image */
+  width: 80%;
+  max-width: 600px;
+  height: 5px;
+  background-color: #333;
+  margin-top: 20px;
+}
+
+.splash-loading-bar {
+  width: 0;
+  height: 100%;
+  background-color: #0f0;
+  transition: width 0.25s linear;
+}
+
+.splash-progress-text {
+  position: relative;
+  z-index: 2; /* Make sure it's above the image */
+  color: #0f0;
+  font-size: 1.2em;
+  margin-top: 10px;
+}
+
+
 /* General styling adjustments */
 button, input {
   font-family: inherit;
@@ -112,6 +162,10 @@ button:hover {
   flex: none;            /* Prevent flex from making it grow */
   word-wrap: break-word;
 }
+.response-box > p:first-of-type {
+  margin-top: 0;
+}
+
 
 
 .detected-emotions-section {

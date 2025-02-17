@@ -1,3 +1,6 @@
+// memory_manager.js
+// Node-based script – do NOT load in index.html
+
 const fs = require('fs');
 const path = require('path');
 
@@ -53,8 +56,8 @@ function saveChatHistory(personaName, historyArray) {
 }
 
 /**
- * Append a single new message (with role/user/assistant + content + timestamp)
- * to the persona’s chat_history.json.
+ * Append a single new message with { role, content, timestamp }
+ * to the persona’s chat_history.json
  */
 function appendChatMessage(personaName, role, content) {
   const history = loadChatHistory(personaName);
@@ -67,7 +70,6 @@ function appendChatMessage(personaName, role, content) {
   saveChatHistory(personaName, history);
 }
 
-// Expose these functions for use by ipcHandlers or the Python server flow:
 module.exports = {
   loadChatHistory,
   saveChatHistory,

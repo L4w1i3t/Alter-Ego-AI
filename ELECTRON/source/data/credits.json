@@ -3,16 +3,10 @@
     "version": "Alpha 1.0",
     "developedBy": "L",
     "tools": [
-        "OpenAI GPT-4o",
         "Ollama",
-        "hf.co/Orenguteng/Llama-3.1-8B-Lexi-Uncensored-V2-GGUF",
+        "Artifish/LlaMa3.2-uncensored (as of Alpha for testing)",
         "Roberta-Base Go-Emotions",
-        "Elevenlabs Multilingual v2 TTS",
         "MiniLM-L6-v2",
-        "FAISS",
-        "Python 3.12",
-        "Flask",
-        "Waitress (WSGI server)",
         "HTML5",
         "CSS3",
         "JavaScript",
@@ -29,6 +23,7 @@
     ],
     "knownIssues": [
         "- The program does not currently have voice recognition implementation.",
-        "- When using the Ollama model, responses can sometimes repeat or become incoherent from memory retrieval. This is an issue with the model itself, not with the algorithm."        
+        "- When using the Ollama model, responses can sometimes repeat or become incoherent from memory retrieval. This is an issue with the model itself, not with the algorithm.",
+        "- Seeing as how as of 2/17/2025 the program is going through a massive backend overhaul, the following features are temporarily removed: ElevenLabs TTS, long-term memory, short-term memory"
     ]
 }

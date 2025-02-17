@@ -1,45 +1,25 @@
+// splash.js
 document.addEventListener('DOMContentLoaded', () => {
-    const splashScreen = document.querySelector('.splash-screen');
-    const loadingBar = document.querySelector('.splash-loading-bar');
-    
-    // Function to update loading bar
-    function updateLoadingBar(percentage) {
-        loadingBar.style.width = `${percentage}%`;
-    }
+  const splashScreen = document.querySelector('.splash-screen');
+  const loadingBar = document.querySelector('.splash-loading-bar');
 
-    // Function to hide splash screen
-    function hideSplashScreen() {
-        splashScreen.classList.add('hidden');
-        
-        // Remove from DOM after transition
-        setTimeout(() => {
-            splashScreen.style.display = 'none';
-        }, 500);
-    }
+  // Create or select the progress text element
+  let progressText = document.querySelector('.splash-progress-text');
+  if (!progressText) {
+    progressText = document.createElement('div');
+    progressText.classList.add('splash-progress-text');
+    splashScreen.appendChild(progressText);
+  }
 
-    // Simulate loading process
-    function simulateLoading() {
-        return new Promise((resolve) => {
-            const totalTime = 3000; // 3 seconds total
-            const intervals = 20; // number of updates
-            const step = 100 / intervals;
-            let progress = 0;
+  window.electronAPI.onModelPullProgress((progress) => {
+    loadingBar.style.width = `${progress}%`;
+    progressText.textContent = `Pulling necessary dependencies. Please wait... ${progress}%`;
+  });  
 
-            const timer = setInterval(() => {
-                progress += step;
-                updateLoadingBar(progress);
-
-                if (progress >= 100) {
-                    clearInterval(timer);
-                    resolve();
-                }
-            }, totalTime / intervals);
-        });
-    }
-
-    // Run loading simulation and then hide splash screen
-    simulateLoading().then(hideSplashScreen);
-
-    // Allow manual dismissal
-    //splashScreen.addEventListener('click', hideSplashScreen);
+  window.electronAPI.onModelPullDone(() => {
+    splashScreen.classList.add('hidden');
+    setTimeout(() => {
+      splashScreen.style.display = 'none';
+    }, 500);
+  });
 });

@@ -1,32 +1,42 @@
+// ipcHandlers.js (Modified: Removed TTS/Voice Model functionality)
+
 const { ipcMain } = require('electron');
-const { clearMemory } = require('./assets/js/clear_memory');
 const path = require('path');
 const fs = require('fs');
+const fetch = require('node-fetch');
+
 const {
-  loadVoiceModels,
-  saveVoiceModels,
+  // Removed: loadVoiceModels, saveVoiceModels,
   loadKeys,
   saveKeys,
   getPersonaFiles,
   readPersonaFile,
   writePersonaFile,
-  deletePersonaFile
+  deletePersonaFile,
 } = require('./utils');
 
-// Handle memory clearing IPC
+const { queryOllamaStream } = require('./api/localLogic');
+const { queryOllamaOnce } = require('./api/localLogic');
+const { detectEmotions } = require('./api/goEmotionsLogic');
+// Removed: convertTextToSpeech from voiceAgent
+
+// Memory management from memory_manager.js
+const {
+  loadChatHistory,
+  appendChatMessage,
+} = require('./assets/js/memory_manager');
+
+// Handler to clear memory
 ipcMain.on('clear-memory', async (event) => {
   try {
-    // 1) Clear all persistent memory on disk
+    const { clearMemory } = require('./assets/js/clear_memory');
     await clearMemory();
 
-    // 2) Also instruct Python to clear its in-memory STM.
-    //    (We assume the Python server is still running on localhost:5000.)
+    // Optionally call a backend endpoint to clear STM if needed
     const response = await fetch('http://127.0.0.1:5000/clear_stm', { method: 'POST' });
     if (!response.ok) {
       console.warn('Warning: Attempt to clear STM returned non-2xx status:', response.status);
     }
-
-    // 3) Let the renderer know it succeeded
     event.sender.send('clear-memory-result', { success: true, message: 'Memory cleared successfully.' });
   } catch (error) {
     console.error('Error clearing memory:', error);
@@ -34,7 +44,17 @@ ipcMain.on('clear-memory', async (event) => {
   }
 });
 
-// Handle IPC for software details
+ipcMain.handle('get-chat-history', async (event, personaName) => {
+  try {
+    const history = loadChatHistory(personaName);
+    return { success: true, history };
+  } catch (error) {
+    console.error('Error getting chat history for:', personaName, error);
+    return { success: false, history: [] };
+  }
+});
+
+// Handler for retrieving software details
 ipcMain.handle('get-software-details', async () => {
   const detailsPath = path.join(__dirname, 'data', 'credits.json');
   try {
@@ -105,70 +125,7 @@ ipcMain.handle('delete-persona', async (event, filename) => {
   }
 });
 
-// IPC handlers for voice manager
-ipcMain.handle('get-voice-models', async () => {
-  try {
-    const models = loadVoiceModels();
-    return { success: true, models };
-  } catch (error) {
-    console.error('Error getting voice models:', error);
-    return { success: false, models: {} };
-  }
-});
-
-ipcMain.handle('add-voice-model', async (event, { name, id }) => {
-  try {
-    const models = loadVoiceModels();
-    if (models[name]) {
-      return { success: false, message: 'Voice model with this name already exists.' };
-    }
-    models[name] = id;
-    saveVoiceModels(models);
-    return { success: true, message: 'Voice model added successfully.' };
-  } catch (error) {
-    console.error('Error adding voice model:', error);
-    return { success: false, message: 'Failed to add voice model.' };
-  }
-});
-
-ipcMain.handle('update-voice-model', async (event, { oldName, newName, newId }) => {
-  try {
-    const models = loadVoiceModels();
-    if (!models[oldName]) {
-      return { success: false, message: 'Original voice model not found.' };
-    }
-    if (oldName !== newName && models[newName]) {
-      return { success: false, message: 'A model with the new name already exists.' };
-    }
-    // Remove old key if name changed
-    if (oldName !== newName) {
-      delete models[oldName];
-    }
-    models[newName] = newId;
-    saveVoiceModels(models);
-    return { success: true, message: 'Voice model updated successfully.' };
-  } catch (error) {
-    console.error('Error updating voice model:', error);
-    return { success: false, message: 'Failed to update voice model.' };
-  }
-});
-
-ipcMain.handle('delete-voice-model', async (event, name) => {
-  try {
-    const models = loadVoiceModels();
-    if (!models[name]) {
-      return { success: false, message: 'Voice model not found.' };
-    }
-    delete models[name];
-    saveVoiceModels(models);
-    return { success: true, message: 'Voice model deleted successfully.' };
-  } catch (error) {
-    console.error('Error deleting voice model:', error);
-    return { success: false, message: 'Failed to delete voice model.' };
-  }
-});
-
-// IPC handlers for keys
+// IPC handlers for API keys
 ipcMain.handle('get-api-keys', async () => {
   try {
     const keys = loadKeys();
@@ -191,33 +148,72 @@ ipcMain.handle('update-api-key', async (event, { keyName, newKeyValue }) => {
   }
 });
 
-const {
-  loadChatHistory,
-  appendChatMessage,
-} = require('./assets/js/memory_manager');
-
-//
-//  GET CHAT HISTORY (FOR ACTIVE PERSONA)
-//
-ipcMain.handle('get-chat-history', async (event, personaName) => {
+// IPC handler for emotion detection
+ipcMain.handle('detect-emotions', async (event, { texts, scoreThreshold = 0.0 }) => {
   try {
-    const history = loadChatHistory(personaName);
-    return { success: true, history };
-  } catch (error) {
-    console.error('Error getting chat history:', error);
-    return { success: false, history: [] };
+    return await detectEmotions(texts, scoreThreshold);
+  } catch (err) {
+    console.error('Error in detect-emotions:', err);
+    return [];
   }
 });
 
-//
-// If you want to also allow forced appending from the front end, you can do:
-// 
-ipcMain.handle('append-chat-message', async (event, { personaName, role, content }) => {
-  try {
-    appendChatMessage(personaName, role, content);
-    return { success: true };
-  } catch (error) {
-    console.error('Error appending chat message:', error);
-    return { success: false, message: error.message };
+// Comprehensive "query" handler (Voice/TTS functionality removed)
+ipcMain.handle('query', async (event, data) => {
+  const {
+    query,
+    persona_name = "ALTER EGO",
+    persona_prompt = "You are a program called ALTER EGO.",
+  } = data;
+
+  if (!query || typeof query !== 'string') {
+    return { error: "Invalid query" };
   }
+
+  // Use the current query as the prompt.
+  const final_prompt = `${query}`;
+
+  // Log the user's query.
+  appendChatMessage(persona_name, "user", query);
+
+  let answer;
+  try {
+    answer = await queryOllamaOnce(final_prompt, persona_prompt);
+  } catch (err) {
+    console.error("Ollama error:", err);
+    return { error: err.message };
+  }
+
+  // Log the assistant's response.
+  appendChatMessage(persona_name, "assistant", answer);
+
+  // Perform emotion detection on both query and response.
+  const query_emotions_list = await detectEmotions([query]);
+  const response_emotions_list = await detectEmotions([answer]);
+  const query_emotions = query_emotions_list[0] || [];
+  const response_emotions = response_emotions_list[0] || [];
+
+  return {
+    response: answer,
+    query_emotions,
+    response_emotions,
+  };
+});
+
+ipcMain.on('start-ollama-stream', (event, { prompt, personaPrompt }) => {
+  // Use the exact personaPrompt sent from the front-end.
+  queryOllamaStream(
+    prompt,
+    personaPrompt,
+    "",
+    (chunkText) => {
+      event.sender.send('ollama-stream-chunk', chunkText);
+    },
+    () => {
+      event.sender.send('ollama-stream-done');
+    },
+    (errMsg) => {
+      event.sender.send('ollama-stream-error', errMsg);
+    }
+  );
 });
