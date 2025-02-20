@@ -1,5 +1,4 @@
 // voice_manager.js
-// NOT USED IN THE PROGRAM AT THE MOMENT
 async function showVoiceManager() {
   const result = await window.electronAPI.getVoiceModels();
   if (!result.success) {

@@ -217,3 +217,32 @@ ipcMain.on('start-ollama-stream', (event, { prompt, personaPrompt }) => {
     }
   );
 });
+
+const { loadVoiceModels } = require('./utils'); ipcMain.handle('getVoiceModels', async () => { 
+  try { const models = loadVoiceModels(); 
+    return { success: true, models }; 
+  } catch (err) { console.error('Error loading voice models:', err); 
+    return { success: false, models: {} }; 
+  } 
+});
+
+ipcMain.handle('stream-voice-response', async (event, { voiceModelId, text }) => {
+  const { streamVoiceResponse } = require('./api/voiceAgent');
+  try {
+    const tempFile = await streamVoiceResponse(voiceModelId, text);
+    return { success: true, filePath: tempFile };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+});
+
+// Add a handler to delete the temporary file:
+ipcMain.handle('delete-temp-file', async (event, filePath) => {
+  try {
+    fs.unlinkSync(filePath);
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting temp file:', error);
+    return { success: false, error: error.message };
+  }
+});

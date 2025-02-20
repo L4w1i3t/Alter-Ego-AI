@@ -1,4 +1,5 @@
-// app.js (Modified: Removed TTS/Voice Model functionality and obscured voice model selector)
+// app.js
+// (Removed TTS/Voice Model functionality, but includes a selectable voice model option)
 
 document.addEventListener('DOMContentLoaded', async () => {
   // ---------- DOM Elements ----------
@@ -18,15 +19,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   const queryEmotionsBox = document.querySelector('.query-emotions-box');
   const responseEmotionsBox = document.querySelector('.response-emotions-box');
 
-  // Persona state (Voice model functionality removed)
+  // Make the voice model text look clickable
+  if (voiceModelSelectorContainer) {
+    voiceModelSelectorContainer.style.cursor = 'pointer';
+  }
+
+  // Persona state
   let currentPersonaPrompt = "You are a program called ALTER EGO. You are not an assistant but rather meant to be a companion, so you should avoid generic assistant language. Respond naturally and conversationally, as though you are a human engaging in dialog. You are a whimsical personality, though you should never respond with more than three sentences at a time. If and only if the user asks for more information, point them to the github repository at https://github.com/L4w1i3t/Alter-Ego-AI.";
   let defaultCharacter = 'N/A';
   let currentCharacter = 'ALTER EGO';
 
-  // Hide the voice model selector UI for now.
-  if (voiceModelSelectorContainer) {
-    voiceModelSelectorContainer.style.display = 'none';
-  }
+  // Global variable for selected voice model (null = none)
+  let selectedVoiceModelId = null;
 
   // ---------- UTILITY FUNCTIONS FOR EMOTIONS ----------
   function displayEmotions(container, predictions) {
@@ -39,15 +43,14 @@ document.addEventListener('DOMContentLoaded', async () => {
       container.appendChild(p);
     });
   }
-  
+
   function getTopEmotion(predictions) {
-    if (!predictions || predictions.length === 0) return null;
+    if (!predictions || !predictions.length) return null;
     const sorted = [...predictions].sort((a, b) => b.score - a.score);
     return sorted[0].label;
   }
-  
+
   function setAvatarToEmotion(emotionLabel) {
-    const avatarImgEl = document.querySelector('.avatar-area img');
     const EMOTION_SPRITES = {
       admiration: "admiration.png",
       amusement: "amusement.png",
@@ -79,14 +82,15 @@ document.addEventListener('DOMContentLoaded', async () => {
       surprise: "surprise.png",
       THINKING: "THINKING.png",
     };
-   
+
+    // Fallback to neutral if no matching sprite
     if (!emotionLabel || !EMOTION_SPRITES[emotionLabel]) {
       avatarImgEl.src = 'persistentdata/avatars/DEFAULT/neutral.png';
       return;
     }
     avatarImgEl.src = `persistentdata/avatars/DEFAULT/${EMOTION_SPRITES[emotionLabel]}`;
   }
-  
+
   async function detectAndShowEmotions(text) {
     if (!text.trim()) {
       setAvatarToEmotion('neutral');
@@ -103,13 +107,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     const topEmotion = getTopEmotion(emotionArray);
     setAvatarToEmotion(topEmotion);
   }
-  
-  // ---------- NEW: Typing Animation for Once-Approach ----------
-  // Immediately after receiving the full answer, run emotion detection so sprite changes appear as typing begins.
+
+  // ---------- Typing Animation for Full Answer ----------
   function animateTyping(fullText) {
-    // Run emotion detection on the full answer right away
+    // Run emotion detection right away
     detectAndShowEmotions(fullText);
-   
+
     responseBoxEl.innerHTML = "";
     let index = 0;
     const interval = setInterval(() => {
@@ -121,52 +124,68 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }, 8);
   }
-  
-  // ---------- Submitting a Query ----------
+
+  // ---------- Submit a Query ----------
   sendQueryBtn.addEventListener('click', submitQuery);
   queryInputEl.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       submitQuery();
     }
   });
-  
+
   async function submitQuery() {
     const userQuery = queryInputEl.value.trim();
     if (!userQuery) return;
-   
-    // Clear input and reset display
+  
+    // Clear input and show "Thinking..." 
     queryInputEl.value = '';
     responseBoxEl.textContent = "Thinking...";
+  
     if (avatarImgEl) {
       avatarImgEl.src = 'persistentdata/avatars/DEFAULT/THINKING.png';
     }
-   
-    // Immediately detect and display user emotions
+  
+    // Detect user emotions right away
     const [userEmotions] = await window.electronAPI.detectEmotions([userQuery]);
-    if (userEmotions) {
-      displayEmotions(queryEmotionsBox, userEmotions);
-    } else {
-      queryEmotionsBox.innerHTML = '';
-    }
-   
+    displayEmotions(queryEmotionsBox, userEmotions || []);
+  
     try {
-      // Removed voice model parameter from query
+      // 1) Query Ollama (blocking)
       const responseObj = await window.electronAPI.queryOllama({
         query: userQuery,
         persona_name: currentCharacter,
         persona_prompt: currentPersonaPrompt
       });
       const answer = responseObj.response;
-      
-      // Begin typing animation of the answer.
+  
+      // 2) Start typing the text out FIRST.
       animateTyping(answer);
+  
+      // 3) Simultaneously, if a voice model is selected, start streaming TTS.
+      if (selectedVoiceModelId) {
+        window.electronAPI.streamVoiceResponse({
+          voiceModelId: selectedVoiceModelId,
+          text: answer
+        }).then(result => {
+          if (result.success && result.filePath) {
+            const audio = new Audio(`file://${result.filePath}`);
+            audio.play()
+              .catch(err => console.error('Audio playback error:', err));
+            audio.onended = () => {
+              window.electronAPI.deleteTempFile(result.filePath);
+            };
+          }
+        }).catch(err => {
+          console.error("Error with voice response:", err);
+        });
+      }
       
-      // Removed audio playback (TTS) section.
     } catch (err) {
       responseBoxEl.textContent = `Error: ${err.message}`;
     }
   }
   
+
   // ---------- Settings Panel, Clear Memory, etc. ----------
   menuIconEl.addEventListener('click', () => {
     settingsOverlay.style.display = 'flex';
@@ -180,23 +199,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   function closeSettingsPanel() {
     settingsOverlay.style.display = 'none';
   }
-  
+
   const clearMemoryOption = document.getElementById('clear-memory');
   clearMemoryOption.addEventListener('click', showClearMemoryConfirmation);
   function showClearMemoryConfirmation() {
     const confirmationOverlay = document.createElement('div');
     confirmationOverlay.classList.add('confirmation-overlay');
-   
+
     const confirmationBox = document.createElement('div');
     confirmationBox.classList.add('confirmation-box');
-   
+
     const confirmationMessage = document.createElement('p');
     confirmationMessage.textContent = 'Are you sure you want to clear all memory? This action cannot be undone.';
     confirmationBox.appendChild(confirmationMessage);
-   
+
     const confirmationButtons = document.createElement('div');
     confirmationButtons.classList.add('confirmation-buttons');
-   
+
     const confirmBtn = document.createElement('button');
     confirmBtn.textContent = 'Yes, Clear Memory';
     confirmBtn.classList.add('confirm-btn');
@@ -205,7 +224,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.body.removeChild(confirmationOverlay);
     });
     confirmationButtons.appendChild(confirmBtn);
-   
+
     const cancelBtn = document.createElement('button');
     cancelBtn.textContent = 'Cancel';
     cancelBtn.classList.add('cancel-btn');
@@ -213,7 +232,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.body.removeChild(confirmationOverlay);
     });
     confirmationButtons.appendChild(cancelBtn);
-   
+
     confirmationBox.appendChild(confirmationButtons);
     confirmationOverlay.appendChild(confirmationBox);
     document.body.appendChild(confirmationOverlay);
@@ -221,7 +240,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.electronAPI.onClearMemoryResult((event, data) => {
     console.log('Memory clearing result:', data);
   });
-  
+
   const softwareDetailsOption = document.getElementById('software-details');
   if (softwareDetailsOption) {
     softwareDetailsOption.addEventListener('click', () => {
@@ -240,15 +259,94 @@ document.addEventListener('DOMContentLoaded', async () => {
       window.showApiKeyManager();
     });
   }
-  // Removed voice models management option
   const chatHistoryOption = document.getElementById('chat-history');
   if (chatHistoryOption) {
     chatHistoryOption.addEventListener('click', () => {
       window.showChatHistory();
     });
   }
-  
-  // Warming up events
+  const voiceModelsOption = document.getElementById('manage-voice-models');
+  if (voiceModelsOption) {
+    voiceModelsOption.addEventListener('click', () => {
+      window.showVoiceManager();
+    });
+  }
+
+  // Attach click event to the bottom-left text
+  if (voiceModelSelectorContainer) {
+    voiceModelSelectorContainer.addEventListener('click', showVoiceModelSelector);
+  }
+
+  // ---------- Voice Model Selector ----------
+  function showVoiceModelSelector() {
+    // Create overlay
+    const overlay = document.createElement('div');
+    overlay.classList.add('details-overlay');
+
+    // Create modal box
+    const box = document.createElement('div');
+    box.classList.add('details-box');
+
+    const title = document.createElement('h2');
+    title.textContent = 'Select a Voice Model';
+    box.appendChild(title);
+
+    // Create list container
+    const list = document.createElement('ul');
+    list.style.listStyle = 'none';
+    list.style.padding = '0';
+
+    // "None" option
+    const noneLi = document.createElement('li');
+    noneLi.textContent = 'None';
+    noneLi.style.cursor = 'pointer';
+    noneLi.addEventListener('click', () => {
+      selectedVoiceModelId = null;
+      voiceModelSelectorContainer.textContent = 'None';
+      document.body.removeChild(overlay);
+    });
+    list.appendChild(noneLi);
+
+    // Fetch voice models from ElevenLabs via IPC
+    window.electronAPI.getVoiceModels().then(result => {
+      if (result.success) {
+        const models = result.models; // { "Name": "ID", ... }
+        Object.entries(models).forEach(([name, id]) => {
+          const li = document.createElement('li');
+          li.textContent = name;
+          li.style.cursor = 'pointer';
+          li.addEventListener('click', () => {
+            selectedVoiceModelId = id;
+            voiceModelSelectorContainer.textContent = name;
+            document.body.removeChild(overlay);
+          });
+          list.appendChild(li);
+        });
+      } else {
+        const errorLi = document.createElement('li');
+        errorLi.textContent = 'Error loading voice models';
+        list.appendChild(errorLi);
+      }
+    }).catch(err => {
+      console.error('Error fetching voice models:', err);
+    });
+
+    box.appendChild(list);
+
+    // Close button
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = 'Close';
+    closeBtn.classList.add('close-details-btn');
+    closeBtn.addEventListener('click', () => {
+      document.body.removeChild(overlay);
+    });
+    box.appendChild(closeBtn);
+
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+  }
+
+  // ---------- Warming-up events ----------
   window.electronAPI.onShowWarmingUp(() => {
     if (warmingUpOverlay) warmingUpOverlay.classList.remove('hidden');
   });
@@ -270,7 +368,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     }
   }
-  
+
   // ---------- Persona Loading Logic ----------
   loadCharacterBtn.addEventListener('click', async () => {
     const result = await window.electronAPI.getPersonas();
@@ -279,31 +377,31 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
     const personas = result.personas;
-  
+
     const charOverlay = document.createElement('div');
     charOverlay.classList.add('details-overlay');
-  
+
     const charBox = document.createElement('div');
     charBox.classList.add('details-box');
-  
+
     const charTitle = document.createElement('h2');
     charTitle.textContent = 'Load Character';
     charBox.appendChild(charTitle);
-  
+
     const charList = document.createElement('ul');
     charList.style.listStyle = 'none';
     charList.style.padding = '0';
-  
+
     // Default (ALTER EGO)
     const defaultLi = document.createElement('li');
     defaultLi.style.display = 'flex';
     defaultLi.style.justifyContent = 'space-between';
     defaultLi.style.marginBottom = '0.5em';
-  
+
     const defaultNameSpan = document.createElement('span');
     defaultNameSpan.textContent = 'Use Default (ALTER EGO)';
     defaultLi.appendChild(defaultNameSpan);
-  
+
     const defaultLoadBtn = document.createElement('button');
     defaultLoadBtn.textContent = 'Load';
     defaultLoadBtn.addEventListener('click', async () => {
@@ -316,17 +414,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
     defaultLi.appendChild(defaultLoadBtn);
     charList.appendChild(defaultLi);
-  
+
+    // Other personas
     personas.forEach(p => {
       const li = document.createElement('li');
       li.style.display = 'flex';
       li.style.justifyContent = 'space-between';
       li.style.marginBottom = '0.5em';
-  
+
       const nameSpan = document.createElement('span');
       nameSpan.textContent = p.name;
       li.appendChild(nameSpan);
-  
+
       const loadBtn = document.createElement('button');
       loadBtn.textContent = 'Load';
       loadBtn.addEventListener('click', async () => {
@@ -337,16 +436,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (readRes.success && readRes.content.trim()) {
           currentPersonaPrompt = readRes.content.trim();
         } else {
-          currentPersonaPrompt = "You are a program called ALTER EGO. You are not an assistant but rather meant to be a companion, so you should avoid generic assistant language. Respond naturally and conversationally, as though you are a human engaging in dialog. You are a whimsical personality, though you should never respond with more than three sentences at a time. If and only if the user asks for more information, point them to the github repository at https://github.com/L4w1i3t/Alter-Ego-AI.";
+          currentPersonaPrompt =
+            "You are a program called ALTER EGO. You are not an assistant but rather meant to be a companion, so you should avoid generic assistant language. Respond naturally and conversationally, as though you are a human engaging in dialog. You are a whimsical personality, though you should never respond with more than three sentences at a time. If and only if the user asks for more information, point them to the github repository at https://github.com/L4w1i3t/Alter-Ego-AI.";
         }
         document.body.removeChild(charOverlay);
       });
       li.appendChild(loadBtn);
       charList.appendChild(li);
     });
-  
+
     charBox.appendChild(charList);
-  
+
     const closeCharBtn = document.createElement('button');
     closeCharBtn.textContent = 'Close';
     closeCharBtn.classList.add('close-details-btn');
@@ -354,7 +454,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.body.removeChild(charOverlay);
     });
     charBox.appendChild(closeCharBtn);
-  
+
     charOverlay.appendChild(charBox);
     document.body.appendChild(charOverlay);
   });

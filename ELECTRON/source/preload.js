@@ -56,6 +56,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('model-pull-done', () => callback());
   },
 
+  streamVoiceResponse: (data) => ipcRenderer.invoke('stream-voice-response', data),
+  getVoiceModels: () => ipcRenderer.invoke('getVoiceModels'),
+  
+  streamVoiceResponse: (data) => ipcRenderer.invoke('stream-voice-response', data),
+  deleteTempFile: (filePath) => ipcRenderer.invoke('delete-temp-file', filePath),
+
   // Warming-up events
   onShowWarmingUp: (callback) => {
     ipcRenderer.on('show-warming-up', (event) => callback(event));
