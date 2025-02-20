@@ -1,5 +1,5 @@
 /*********************************************************************
- * main.js (Updated)
+ * main.js
  *********************************************************************/
 
 const os = require('os');
@@ -443,9 +443,9 @@ function startPythonServer(modeChoice) {
     console.log(`Python server exited with code ${code}`);
   });
 
-  // Warm up logic
-  const checkServerReady = async (retries = 5, delay = 2000) => {
-    for (let i = 0; i < retries; i++) {
+  // Warm up logic without a fixed timeout: keep polling until success or user exits.
+  async function checkServerReady(delay = 5000) {
+    while (true) {
       try {
         const response = await fetch('http://127.0.0.1:5000/query', {
           method: 'POST',
@@ -454,31 +454,25 @@ function startPythonServer(modeChoice) {
         });
         if (response.ok) {
           console.log('Python server warmed up successfully.');
-          const allWindows = BrowserWindow.getAllWindows();
-          if (allWindows.length > 0) {
-            // Let the renderer hide the warming-up overlay
-            allWindows[0].webContents.send('hide-warming-up');
-          }
-          return;
+          BrowserWindow.getAllWindows().forEach(win => {
+            win.webContents.send('hide-warming-up');
+          });
+          break;
         }
       } catch (error) {
-        console.warn(`Attempt ${i+1} - Error warming up:`, error);
+        // Only log errors that are not ECONNREFUSED to reduce noise during startup.
+        if (!error.cause || error.cause.code !== 'ECONNREFUSED') {
+          console.warn('Warm-up attempt error:', error);
+        }
+        // Otherwise, ignore ECONNREFUSED errors as they are expected until the server is ready.
       }
       await new Promise(resolve => setTimeout(resolve, delay));
     }
+  }
   
-    console.warn('Failed to warm up server after multiple attempts.');
-    // Here is where you notify the renderer
-    const allWindows = BrowserWindow.getAllWindows();
-    if (allWindows.length > 0) {
-      allWindows[0].webContents.send('warm-up-failure');
-    }
-  };  
-
-  setTimeout(() => {
-    checkServerReady();
-  }, 5000);
+  checkServerReady(); // Start checking immediately without a timeout cutoff
 }
+
 
 /*********************************************************************
  * 5) APP EVENTS

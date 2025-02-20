@@ -8,7 +8,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "electron .",
     "dev": "set NODE_ENV=development && npm start",
-    "obfuscate": "javascript-obfuscator assets/js --output assets/js-obfuscated",
+    "obfuscate-assets": "javascript-obfuscator assets/js --output assets/js-obfuscated",
+    "obfuscate-root": "javascript-obfuscator . --output obfuscated --exclude node_modules",
     "package-linux": "electron-packager . ALTEREGO --platform=linux --arch=x64 --out=release-builds --overwrite --icon=assets/gui/favicon.ico",
     "package-macos": "electron-packager . ALTEREGO --platform=darwin --arch=x64 --out=release-builds --overwrite --icon=assets/gui/favicon.icns",
     "package-win32": "electron-packager . ALTEREGO --platform=win32 --arch=ia32 --out=release-builds --overwrite --icon=assets/gui/favicon.ico",
@@ -29,7 +30,8 @@
     "axios": "^1.7.9",
     "elevenlabs": "^0.18.1",
     "marked": "^15.0.6",
-    "openai": "^4.76.1",
+    "ollama": "^0.5.13",
+    "openai": "^4.84.1",
     "socket.io-client": "^4.8.1"
   }
 }

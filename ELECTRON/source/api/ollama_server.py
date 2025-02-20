@@ -421,10 +421,10 @@ def query():
     # 2) Long-term memory retrieval
     ################################################################
     # We use the FAISS-based EmbeddingMemory to do a similarity search. 
-    # top_k=3 means we only fetch the three most relevant chunks from memory. 
+    # top_k=2 means we only fetch the two most relevant chunks from memory. 
     ################################################################
     embedder = get_embedder_for_persona(persona_name)
-    top_k = 3
+    top_k = 2
     ltm_results = embedder.search(user_query, top_k=top_k)
     
     # We'll combine any retrieved chunks into a single string to feed to the LLM
