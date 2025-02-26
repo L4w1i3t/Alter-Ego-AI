@@ -428,49 +428,130 @@ function startPythonServer(modeChoice) {
   const serverScriptPath = path.join(__dirname, 'api', 'server.py');
   const env = { ...process.env, MODEL_BACKEND: modeChoice };
 
+  // Notify the frontend that we're starting the server
+  BrowserWindow.getAllWindows().forEach(win => {
+    win.webContents.send('update-warmup-status', {
+      message: 'Starting Python server...',
+      progress: 10
+    });
+  });
+
   pythonProcess = spawn(pythonCmd, [serverScriptPath], {
     cwd: path.join(__dirname, 'api'),
     env
   });
 
+  let serverOutput = '';
+  
   pythonProcess.stdout.on('data', (data) => {
-    console.log(`[Python stdout] ${data}`);
+    const output = data.toString();
+    serverOutput += output;
+    console.log(`[Python stdout] ${output}`);
+    
+    // Parse progress indicators from server output
+    if (output.includes('Loading model')) {
+      updateWarmupProgress('Loading AI model...', 30);
+    } else if (output.includes('Initializing')) {
+      updateWarmupProgress('Initializing components...', 50);
+    } else if (output.includes('Server starting')) {
+      updateWarmupProgress('Server starting...', 70);
+    }
   });
+  
   pythonProcess.stderr.on('data', (data) => {
-    console.warn(`[Python stderr] ${data}`);
+    const error = data.toString();
+    serverOutput += error;
+    console.warn(`[Python stderr] ${error}`);
+    
+    // Show error in warmup screen if it's critical
+    if (error.includes('Error:') || error.includes('Exception:')) {
+      updateWarmupProgress(`Error detected: ${error.substring(0, 100)}...`, 0);
+    }
   });
+  
   pythonProcess.on('close', (code) => {
     console.log(`Python server exited with code ${code}`);
+    
+    // If server exits unexpectedly during warmup
+    if (code !== 0) {
+      BrowserWindow.getAllWindows().forEach(win => {
+        win.webContents.send('warm-up-failure', {
+          message: 'Server exited unexpectedly',
+          details: serverOutput
+        });
+      });
+    }
   });
 
-  // Warm up logic without a fixed timeout: keep polling until success or user exits.
-  async function checkServerReady(delay = 5000) {
-    while (true) {
-      try {
-        const response = await fetch('http://127.0.0.1:5000/query', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: 'warm-up' })
-        });
-        if (response.ok) {
-          console.log('Python server warmed up successfully.');
+  // Start the server check with better feedback
+  checkServerReady();
+}
+
+function updateWarmupProgress(message, progressPercent) {
+  BrowserWindow.getAllWindows().forEach(win => {
+    win.webContents.send('update-warmup-status', {
+      message,
+      progress: progressPercent
+    });
+  });
+}
+
+async function checkServerReady() {
+  const maxAttempts = 60; // Try for about 5 minutes (60 * 5s = 300s or 5 min)
+  const delay = 5000; // 5 seconds between attempts
+  let attempts = 0;
+  let startTime = Date.now();
+  
+  updateWarmupProgress('Connecting to server...', 20);
+
+  while (attempts < maxAttempts) {
+    try {
+      updateWarmupProgress(`Checking server readiness (Attempt ${attempts + 1}/${maxAttempts})...`, 
+        Math.min(70 + Math.floor((attempts / maxAttempts) * 20), 90));
+        
+      const response = await fetch('http://127.0.0.1:5000/query', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: 'warm-up' })
+      });
+      
+      if (response.ok) {
+        const timeTaken = ((Date.now() - startTime) / 1000).toFixed(1);
+        console.log(`Python server warmed up successfully in ${timeTaken}s.`);
+        updateWarmupProgress('Server ready!', 100);
+        
+        // Small delay so users can see the "ready" message
+        setTimeout(() => {
           BrowserWindow.getAllWindows().forEach(win => {
             win.webContents.send('hide-warming-up');
           });
-          break;
-        }
-      } catch (error) {
-        // Only log errors that are not ECONNREFUSED to reduce noise during startup.
-        if (!error.cause || error.cause.code !== 'ECONNREFUSED') {
-          console.warn('Warm-up attempt error:', error);
-        }
-        // Otherwise, ignore ECONNREFUSED errors as they are expected until the server is ready.
+        }, 1500);
+        
+        return; // Success! Exit the function
       }
-      await new Promise(resolve => setTimeout(resolve, delay));
+    } catch (error) {
+      // Only log errors that are not ECONNREFUSED to reduce noise during startup.
+      if (!error.cause || error.cause.code !== 'ECONNREFUSED') {
+        console.warn('Warm-up attempt error:', error);
+      }
+      // Otherwise, ignore ECONNREFUSED errors as they are expected until the server is ready.
     }
+    
+    attempts++;
+    
+    // If we've reached the maximum attempts, inform the user
+    if (attempts >= maxAttempts) {
+      BrowserWindow.getAllWindows().forEach(win => {
+        win.webContents.send('warm-up-failure', {
+          message: 'Server warmup timed out after multiple attempts',
+          details: 'The server is taking too long to start. This could be due to hardware limitations or a configuration issue.'
+        });
+      });
+      return;
+    }
+    
+    await new Promise(resolve => setTimeout(resolve, delay));
   }
-  
-  checkServerReady(); // Start checking immediately without a timeout cutoff
 }
 
 
@@ -516,3 +597,20 @@ app.on('window-all-closed', async () => {
   }
   app.quit();
 });
+
+ipcMain.on('restart-app', () => {
+  app.relaunch();
+  app.exit();
+});
+
+// Also add this to the start of main.js
+const maxAppStartupTime = 600000; // 10 minutes
+// Add overall app timeout safety mechanism
+setTimeout(() => {
+  if (BrowserWindow.getAllWindows().length > 0) {
+    BrowserWindow.getAllWindows()[0].webContents.send('warm-up-failure', {
+      message: 'Application startup timed out',
+      details: 'The application took too long to start. This might be due to hardware limitations or unexpected errors.'
+    });
+  }
+}, maxAppStartupTime);

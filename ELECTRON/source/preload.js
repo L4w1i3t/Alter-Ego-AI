@@ -21,4 +21,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
     updateApiKey: (data) => ipcRenderer.invoke('update-api-key', data),
     onShowWarmingUp: (callback) => ipcRenderer.on('show-warming-up', callback),
     onHideWarmingUp: (callback) => ipcRenderer.on('hide-warming-up', callback),
+    onUpdateWarmupStatus: (callback) => ipcRenderer.on('update-warmup-status', callback),
+    restartApp: () => ipcRenderer.send('restart-app'),
 });

@@ -8,7 +8,7 @@
 
 # ALTER EGO
 
-ALTER EGO is an interactive digital AI interface that brings any personality to life. Converse, learn, or just have fun chatting with historical figures, fictional characters, or entirely new creations. Leveraging state‐of‐the‐art language models, emotion detection, dynamic avatars, and realistic voice synthesis, ALTER EGO is designed to provide a rich, engaging user experience.
+ALTER EGO is an interactive digital AI interface that brings any personality to life. Converse, learn, or just have fun chatting with historical figures, fictional characters, or entirely new creatures of your imagination.
 
 ***CURRENT VERSION: Alpha 1.0***
 
@@ -18,6 +18,7 @@ ALTER EGO is an interactive digital AI interface that brings any personality to 
 
 - [About ALTER EGO](#about-alter-ego)
 - [Features](#features)
+- [System Requirements](#system-requirements)
 - [Setup](#setup)
 - [Usage](#usage)
 - [Known Issues](#known-issues)
@@ -30,14 +31,14 @@ ALTER EGO is an interactive digital AI interface that brings any personality to 
 
 ## About ALTER EGO
 
-ALTER EGO is an AI platform built with Electron and Python that transforms how you interact with digital personas. The application leverages modern NLP models, emotion detection via roberta-base-go_emotions, and realistic voice synthesis via ElevenLabs to offer a seamless conversation experience. You can choose between two language model backends—OpenAI GPT or Ollama—with Ollama enabled by default—and manage a persistent conversation memory using JSON and FAISS-based storage.
+ALTER EGO is an AI platform built with Electron and Python that transforms how you interact with digital personas. The application leverages modern NLP models, emotion detection via roberta-base-go_emotions, and voice synthesis to create immersive, realistic conversations with customizable characters.
 
 ---
 
 ## Features
 
 - **Customizable Personalities**:  
-  Create, load, and switch between various personas. In addition to your custom characters, you can always revert to the default “ALTER EGO” persona.
+  Create, load, and switch between various personas. In addition to your custom characters, you can always revert to the default "ALTER EGO" persona.
 
 - **Backend Model Selection**:  
   Choose your preferred language model backend:
@@ -51,19 +52,41 @@ ALTER EGO is an AI platform built with Electron and Python that transforms how y
   Enjoy lifelike responses via ElevenLabs text-to-speech synthesis.
 
 - **Emotion Detection & Dynamic Avatars**:  
-  An embedded roberta-base-go_emotions model detects emotional cues from both your inputs and the assistant’s responses, with the avatar updating dynamically to reflect the current emotional tone.
+  An embedded roberta-base-go_emotions model detects emotional cues from both your inputs and the assistant's responses, with the avatar updating dynamically to reflect the current emotional tone.
 
 - **Built-In Setup Wizard & Management Tools**:  
-  A setup wizard checks for dependencies (including Python, required models, and packages) and auto-installs missing components where possible. In-app menus let you manage API keys, voice models, personas, and view chat history.
+  A setup wizard checks for dependencies (including Python, required models, and packages) and auto-installs missing components where possible. In-app menus let you manage API keys, voice models, and personas.
 
 - **Platform Support**:  
   *Currently, only a Windows build is officially available.* Linux-specific details have not yet been fully ironed out, but future updates and testing are planned to enhance cross-platform compatibility.
 
 ---
 
+## System Requirements
+
+### Minimum Requirements:
+
+- **Processor**: Intel Core i3 (8th gen or newer) / AMD Ryzen 3 (Dual-core, 2.4+ GHz)
+- **Memory**: 4 GB RAM 
+- **Storage**: 2.5 GB available space (500 MB for application, 2 GB for models and data)
+- **Graphics**: Integrated graphics
+- **Internet**: 1+ Mbps connection (required for API access)
+- **OS**: Windows 10 64-bit
+
+### Recommended Requirements:
+
+- **Processor**: Intel Core i5 (10th gen or newer) / AMD Ryzen 5 or better (Quad-core, 3.0+ GHz)
+- **Memory**: 8-16 GB RAM
+- **Storage**: 6+ GB available space on SSD
+- **Graphics**: Dedicated GPU with 2+ GB VRAM (for using Ollama with larger models)
+- **Internet**: 5+ Mbps stable connection
+- **OS**: Windows 10/11 64-bit
+
+---
+
 ## Setup
 
-ALTER EGO is designed to be portable and run “out of the box.” When you first launch the application, a setup wizard will perform several checks:
+ALTER EGO is designed to be portable and run "out of the box." When you first launch the application, a setup wizard will perform several checks:
 
 - **Python Environment**:  
   - On Windows, an embedded Python executable is used.
@@ -75,7 +98,7 @@ ALTER EGO is designed to be portable and run “out of the box.” When you firs
 - **Ollama Model Setup**:  
   A temporary Ollama server is started to pull the necessary base language model. Once complete, the server is terminated.
 
-Once the wizard finishes, you’re ready to use ALTER EGO!
+Once the wizard finishes, you're ready to use ALTER EGO!
 
 **Prerequisites**:
 - Basic technical familiarity with language models and API integrations.
@@ -95,11 +118,11 @@ If you encounter any issues during setup, please open an issue in the repository
    A popup will allow you to choose between the Ollama engine (default) and OpenAI GPT's API.
 
 3. **Manage Personas**:  
-   - Use the “Load Character” button to choose a custom persona or select the built-in “ALTER EGO” default.
-   - You can create, edit, or delete personas via the “Manage Personas” option in the settings menu.
+   - Use the "Load Character" button to choose a custom persona or select the built-in "ALTER EGO" default.
+   - You can create, edit, or delete personas via the "Manage Personas" option in the settings menu.
 
 4. **Initiate Conversation**:  
-   - Type your message into the query box and press Enter or click “Send Query.”
+   - Type your message into the query box and press Enter or click "Send Query."
    - The assistant processes your query using the selected language model and responds with text and synthesized voice.
 
 5. **View Dynamic Responses**:  
@@ -124,6 +147,9 @@ If you encounter any issues during setup, please open an issue in the repository
 - **Resource Usage**:  
   Heavy language models or context windows may strain system resources. Future updates will focus on optimizing performance.
 
+- **Server Warmup Issues**:  
+  Some users may experience extended wait times during server warmup. Recent updates have improved progress visibility and added timeout handling to prevent indefinite waiting.
+
 ---
 
 ## Optimizations & Future Improvements
@@ -141,7 +167,7 @@ If you encounter any issues during setup, please open an issue in the repository
 
 ## Tutorials and Additional Resources
 
-There will eventually be detailed tutorials on setting up API keys, loading and training voice models, and fine-tuning the system’s performance. In future updates, I'll provide step-by-step guides and additional resources to help you get the most out of ALTER EGO.
+There will eventually be detailed tutorials on setting up API keys, loading and training voice models, and fine-tuning the system's performance. In future updates, I'll provide step-by-step guides for maximizing ALTER EGO's capabilities.
 
 ---
 
@@ -179,6 +205,6 @@ By using ALTER EGO, you agree to the following:
 
 ## Contact
 
-For questions, suggestions, or contributions, please open an issue on the repository. Please note that I am a very busy person and may not always be immediately available, but I will do my best to respond and communicate.
+For questions, suggestions, or contributions, please open an issue on the repository. Please note that I am a very busy person and may not always be immediately available, but I will do my best to respond in a timely manner.
 
 ---

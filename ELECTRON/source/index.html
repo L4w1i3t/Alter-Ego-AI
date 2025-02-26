@@ -21,8 +21,16 @@
   <div id="warming-up-overlay" class="warning-overlay hidden">
     <div class="warning-overlay-content">
       <h1>Warming up, please wait...</h1>
-      <h2>This'll take a few seconds.</h2>
-      <h2>If you're running for the first time, this will take a couple minutes.</h2>
+      <div class="warmup-progress-container">
+        <div id="warmup-progress-bar" style="width: 10%"></div>
+      </div>
+      <h2 id="warmup-status">Starting up...</h2>
+      <h3>If you're running for the first time, this may take a couple minutes.</h3>
+      <div id="warmup-error" class="hidden">
+        <h2 style="color: #ff4444;">Error during warmup:</h2>
+        <div id="warmup-error-message" style="background: #200000; padding: 10px; border: 1px solid #ff4444; margin-top: 10px;"></div>
+        <button id="restart-app" style="margin-top: 15px;">Restart Application</button>
+      </div>
     </div>
   </div>
 

@@ -72,6 +72,60 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
+  window.electronAPI.onUpdateWarmupStatus((event, data) => {
+    const warmupStatusElement = document.getElementById('warmup-status');
+    const progressBarElement = document.getElementById('warmup-progress-bar');
+    
+    if (warmupStatusElement) {
+      warmupStatusElement.textContent = data.message;
+    }
+    
+    if (progressBarElement) {
+      progressBarElement.style.width = `${data.progress}%`;
+    }
+  });
+  
+  // Improve the warm-up failure handler
+  window.electronAPI.onWarmUpFailure((event, data) => {
+    const warmingUpOverlay = document.getElementById('warming-up-overlay');
+    const warmupError = document.getElementById('warmup-error');
+    const warmupErrorMessage = document.getElementById('warmup-error-message');
+    const warmupStatus = document.getElementById('warmup-status');
+    const progressBar = document.getElementById('warmup-progress-bar');
+    
+    if (warmingUpOverlay) {
+      warmingUpOverlay.classList.remove('hidden');
+      
+      // Update progress UI to indicate error
+      if (progressBar) {
+        progressBar.style.width = '100%';
+        progressBar.style.backgroundColor = '#ff4444'; // Red for error
+      }
+      
+      if (warmupStatus) {
+        warmupStatus.textContent = data.message || 'Server failed to start!';
+        warmupStatus.style.color = '#ff4444'; // Red for error
+      }
+      
+      // Show error details
+      if (warmupError) {
+        warmupError.classList.remove('hidden');
+      }
+      
+      if (warmupErrorMessage) {
+        warmupErrorMessage.textContent = data.details || 'Please try restarting the application.';
+      }
+    }
+  });
+  
+  // Add a restart button handler
+  const restartAppButton = document.getElementById('restart-app');
+  if (restartAppButton) {
+    restartAppButton.addEventListener('click', () => {
+      window.electronAPI.restartApp();
+    });
+  }
+
   async function submitQuery() {
     const queryInputEl = document.querySelector('.query-input');
     const responseBoxEl = document.querySelector('.response-box');
