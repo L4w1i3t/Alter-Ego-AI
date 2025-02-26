@@ -2,32 +2,10 @@ import os
 import json
 import logging
 from datetime import datetime, timezone
-from embedding_memory import EmbeddingMemory
 
-# Global variables for STM and LTM
-STM_BUFFERS = {}
-MAX_BUFFER_SIZE = 10
-EMBEDDING_MEMORIES = {}
-
-def get_stm_for_persona(persona_name):
-    if persona_name not in STM_BUFFERS:
-        STM_BUFFERS[persona_name] = []
-    return STM_BUFFERS[persona_name]
-
-def get_embedder_for_persona(persona_name):
-    if persona_name not in EMBEDDING_MEMORIES:
-        EMBEDDING_MEMORIES[persona_name] = EmbeddingMemory(
-            model_name="sentence-transformers/all-MiniLM-L6-v2",
-            persona_name=persona_name
-        )
-    return EMBEDDING_MEMORIES[persona_name]
-
-def add_to_longterm_memory(user_text, assistant_text, persona_name):
-    embedder = get_embedder_for_persona(persona_name)
-    user_chunk = f"User said: {user_text}"
-    assistant_chunk = f"Assistant replied: {assistant_text}"
-    embedder.add_text(user_chunk)
-    embedder.add_text(assistant_chunk)
+# COMPATIBILITY NOTE: These functions are retained for compatibility with 
+# the JavaScript front-end that expects chat_history.json files.
+# New code should use SQLMemory directly.
 
 def get_chat_history_path(persona_name):
     base_dir = os.path.join(
@@ -66,9 +44,3 @@ def append_chat_message(persona_name, role, content):
     }
     history.append(entry)
     save_chat_history(persona_name, history)
-
-def clear_memory():
-    global STM_BUFFERS, EMBEDDING_MEMORIES
-    STM_BUFFERS = {}
-    EMBEDDING_MEMORIES = {}
-    logging.info("Short-term memory and in-memory embedding memories have been cleared.")

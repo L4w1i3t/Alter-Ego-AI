@@ -86,7 +86,6 @@ async function runSetupWizard() {
       // Our checks
       await checkOllama();
       await checkGoEmotionsModel();
-      await checkMiniLM6();
 
       wizardLog('All Windows prerequisites met via embedded environment.');
     } else {
@@ -99,7 +98,6 @@ async function runSetupWizard() {
 
       await checkOllama();
       await checkGoEmotionsModel();
-      await checkMiniLM6();
 
       wizardLog('All requirements have been met on Linux/Mac.');
     }
@@ -337,47 +335,6 @@ function checkGoEmotionsModel() {
   });
 }
 
-function checkMiniLM6() {
-  return new Promise((resolve, reject) => {
-    const home = os.homedir();
-    const modelPath = path.join(
-      home,
-      '.cache',
-      'huggingface',
-      'hub',
-      'models--sentence-transformers--all-MiniLM-L6-v2'
-    );
-
-    if (fs.existsSync(modelPath)) {
-      wizardLog('MiniLM-L6-v2 model already cached.');
-      resolve();
-    } else {
-      wizardLog('MiniLM-L6-v2 not found locally. Downloading from Hugging Face...');
-
-      const pythonScriptPath = path.join(__dirname, 'install', 'mempipe.py');
-      const pythonCmd = process.platform === 'win32' ? pythonExecutable : 'python';
-
-      const downloader = spawn(pythonCmd, [pythonScriptPath]);
-
-      downloader.stdout.on('data', (data) => {
-        wizardLog(`[MiniLM STDOUT] ${data.toString()}`);
-      });
-      downloader.stderr.on('data', (data) => {
-        wizardLog(`[MiniLM STDERR] ${data.toString()}`);
-      });
-
-      downloader.on('close', (code) => {
-        if (code === 0) {
-          wizardLog('MiniLM-L6-v2 model downloaded successfully.');
-          resolve();
-        } else {
-          reject(new Error('Failed to download MiniLM-L6-v2 model.'));
-        }
-      });
-    }
-  })
-}
-
 /*********************************************************************
  * 3) IF ALL GOES WELL, CREATE MAIN WINDOW
  *********************************************************************/
@@ -553,7 +510,6 @@ async function checkServerReady() {
     await new Promise(resolve => setTimeout(resolve, delay));
   }
 }
-
 
 /*********************************************************************
  * 5) APP EVENTS
