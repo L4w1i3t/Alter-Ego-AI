@@ -425,7 +425,7 @@ function createMainWindow() {
 function startPythonServer(modeChoice) {
   let pythonCmd = pythonExecutable; // already determined
 
-  const serverScriptPath = path.join(__dirname, 'api', 'ollama_server.py');
+  const serverScriptPath = path.join(__dirname, 'api', 'server.py');
   const env = { ...process.env, MODEL_BACKEND: modeChoice };
 
   pythonProcess = spawn(pythonCmd, [serverScriptPath], {
