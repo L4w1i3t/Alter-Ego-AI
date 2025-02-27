@@ -8,31 +8,29 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "electron .",
     "dev": "set NODE_ENV=development && npm start",
-    "obfuscate-assets": "javascript-obfuscator assets/js --output assets/js-obfuscated",
-    "obfuscate-root": "javascript-obfuscator . --output obfuscated --exclude node_modules",
     "package-linux": "electron-packager . ALTEREGO --platform=linux --arch=x64 --out=release-builds --overwrite --icon=assets/gui/favicon.ico",
     "package-macos": "electron-packager . ALTEREGO --platform=darwin --arch=x64 --out=release-builds --overwrite --icon=assets/gui/favicon.icns",
     "package-win32": "electron-packager . ALTEREGO --platform=win32 --arch=ia32 --out=release-builds --overwrite --icon=assets/gui/favicon.ico",
-    "package-win64": "electron-packager . ALTEREGO --platform=win32 --arch=x64 --out=release-builds --overwrite --icon=assets/gui/favicon.ico"
+    "package-win64": "electron-packager . ALTEREGO --platform=win32 --arch=x64 --out=release-builds --overwrite --icon=assets/gui/favicon.ico",
+    "optimize-css": "postcss assets/css/*.css -d assets/css-optimized"
   },
   "keywords": [],
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@fullhuman/postcss-purgecss": "^7.0.2",
     "@types/electron": "^1.6.12",
     "@types/node": "^22.13.5",
     "concurrently": "^9.1.2",
+    "cssnano": "^7.0.6",
     "electron": "^34.2.0",
     "electron-reload": "^2.0.0-alpha.1",
+    "postcss-cli": "^11.0.0",
+    "purgecss": "^7.0.2",
     "typescript": "^5.7.3"
   },
   "dependencies": {
-    "axios": "^1.7.9",
-    "elevenlabs": "^1.52.0",
-    "marked": "^15.0.7",
-    "ollama": "^0.5.14",
-    "openai": "^4.85.4",
-    "socket.io-client": "^4.8.1",
+    "command-exists": "^1.2.9",
     "sqlite3": "^5.1.7"
   }
 }

@@ -18,7 +18,6 @@ from elevenlabs_api import convert_text_to_speech
 from db_memory import SQLMemory
 from ollama_manager import start_server, stop_server, query_ollama
 from openai_manager import query_openai, warmup_openai
-from memory_manager import append_chat_message, get_chat_history_path, load_chat_history, save_chat_history
 
 # Flask App Setup
 app = Flask(__name__)

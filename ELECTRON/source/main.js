@@ -467,52 +467,47 @@ function updateWarmupProgress(message, progressPercent) {
   }
 }
 
+let serverWarmedUp = false; // Global flag
+
 async function checkServerReady() {
-  const maxAttempts = 60; // Try for about 5 minutes (60 * 5s = 300s or 5 min)
-  const delay = 5000; // 5 seconds between attempts
+  if (serverWarmedUp) return;
+
+  const maxAttempts = 60;
+  const delay = 5000;
   let attempts = 0;
-  let startTime = Date.now();
-  
+  const startTime = Date.now();
+
   updateWarmupProgress('Connecting to server...', 20);
 
   while (attempts < maxAttempts) {
     try {
-      updateWarmupProgress(`Checking server readiness (Attempt ${attempts + 1}/${maxAttempts})...`,
-        Math.min(70 + Math.floor((attempts / maxAttempts) * 20), 90));
-        
-      const response = await fetch('http://127.0.0.1:5000/query', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: 'warm-up' })
+      updateWarmupProgress(
+        `Checking server readiness (Attempt ${attempts + 1}/${maxAttempts})...`,
+        Math.min(70 + Math.floor((attempts / maxAttempts) * 20), 90)
+      );
+
+      const response = await fetch('http://127.0.0.1:5000/status', {
+        method: 'GET'
       });
-      
+
       if (response.ok) {
+        serverWarmedUp = true;
         const timeTaken = ((Date.now() - startTime) / 1000).toFixed(1);
         console.log(`Python server warmed up successfully in ${timeTaken}s.`);
         updateWarmupProgress('Server ready!', 100);
-        
-        // Small delay so users can see the "ready" message
         setTimeout(() => {
-          if (mainWindow) {
-            mainWindow.webContents.send('hide-warming-up');
-          }
+          if (mainWindow) mainWindow.webContents.send('hide-warming-up');
         }, 1500);
-        
-        return; // Success! Exit the function
+        return;
       }
     } catch (error) {
-      // Only log errors that are not ECONNREFUSED to reduce noise during startup.
-      if (!error.cause || error.cause.code !== 'ECONNREFUSED') {
-        console.warn('Warm-up attempt error:', error);
-      }
-      // Otherwise, ignore ECONNREFUSED errors as they are expected until the server is ready.
+      // ECONNREFUSED and similar errors can be safely ignored during startup
     }
-    
+
     attempts++;
-    
-    // If we've reached the maximum attempts, inform the user
+
     if (attempts >= maxAttempts) {
-      if (mainWindow) {
+      if (!serverWarmedUp && mainWindow) {
         mainWindow.webContents.send('warm-up-failure', {
           message: 'Server warmup timed out after multiple attempts',
           details: 'The server is taking too long to start. This could be due to hardware limitations or a configuration issue.'
@@ -520,10 +515,11 @@ async function checkServerReady() {
       }
       return;
     }
-    
+
     await new Promise(resolve => setTimeout(resolve, delay));
   }
 }
+
 
 /*********************************************************************
  * 5) APP EVENTS

@@ -1,30 +1,77 @@
+const sqlite3 = require('sqlite3').verbose();
 const fs = require('fs');
 const path = require('path');
 
-// Path to the memory_databases folder
 const memoryDatabasesPath = path.join(__dirname, '../../persistentdata/memory_databases');
 
-// Function to clear the memory_databases folder
 function clearMemory() {
-    return new Promise((resolve, reject) => {
-        fs.rm(memoryDatabasesPath, { recursive: true, force: true }, (err) => {
-            if (err) {
-                console.error('Error clearing the memory_databases directory:', err);
-                return reject(err);
-            }
-            console.log('Cleared the memory_databases directory.');
+  return new Promise((resolve, reject) => {
+    fs.readdir(memoryDatabasesPath, (err, folders) => {
+      if (err) {
+        console.error('Error reading memory_databases directory:', err);
+        return reject(err);
+      }
 
-            // Recreate the memory_databases folder
-            fs.mkdir(memoryDatabasesPath, { recursive: true }, (err) => {
+      const operations = [];
+
+      folders.forEach((folder) => {
+        const folderPath = path.join(memoryDatabasesPath, folder);
+        if (fs.lstatSync(folderPath).isDirectory()) {
+          const dbPath = path.join(folderPath, 'memory.db');
+          const chatHistoryPath = path.join(folderPath, 'chat_history.json');
+
+          // Clear SQLite database
+          const dbOp = new Promise((res, rej) => {
+            if (fs.existsSync(dbPath)) {
+              const db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE, (err) => {
                 if (err) {
-                    console.error('Error creating the memory_databases directory:', err);
-                    return reject(err);
+                  console.error(`Error opening DB at ${dbPath}:`, err);
+                  return rej(err);
                 }
-                console.log('Recreated the memory_databases directory.');
-                resolve();
+              });
+              db.run("DELETE FROM memory_entries", function(err) {
+                if (err) {
+                  console.error(`Error clearing memory_entries in ${dbPath}:`, err);
+                  db.close();
+                  return rej(err);
+                }
+                // Optional: run VACUUM to optimize the DB file
+                db.run("VACUUM", function(err) {
+                  if (err) {
+                    console.error(`Error vacuuming DB at ${dbPath}:`, err);
+                  }
+                  db.close();
+                  res();
+                });
+              });
+            } else {
+              res();
+            }
+          });
+          operations.push(dbOp);
+
+          // Clear chat_history.json file
+          const chatOp = new Promise((res, rej) => {
+            fs.writeFile(chatHistoryPath, '[]', 'utf8', (err) => {
+              if (err) {
+                console.error(`Error clearing chat history at ${chatHistoryPath}:`, err);
+                return rej(err);
+              }
+              res();
             });
-        });
+          });
+          operations.push(chatOp);
+        }
+      });
+
+      Promise.all(operations)
+        .then(() => {
+          console.log('Cleared all memory (database and chat history) without deleting folders.');
+          resolve();
+        })
+        .catch(reject);
     });
+  });
 }
 
 module.exports = { clearMemory };
