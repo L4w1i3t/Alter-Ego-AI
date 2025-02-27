@@ -1,13 +1,14 @@
 {
     "softwareName": "ALTER EGO",
-    "version": "Alpha 1.0",
-    "developedBy": "L",
+    "version": "Alpha 1.1",
+    "developedBy": "Lawliet",
     "tools": [
-        "OpenAI GPT-4o",
+        "OpenAI GPT-4o-latest",
         "Ollama",
         "hf.co/artifish/llama3.2-uncensored",
         "Roberta-Base Go-Emotions",
         "Elevenlabs Multilingual v2 TTS",
+        "Sentence-Transformers (MiniLM-L6-v2)",
         "Python 3.12",
         "Flask",
         "Waitress (WSGI server)",

@@ -46,7 +46,7 @@ ALTER EGO is an AI platform built with Electron and Python that transforms how y
   - **OpenAI GPT**: Robust responses (requires valid API key and is billed on a by-token basis. Use Responsibly.)
 
 - **Dynamic Conversation Memory**:  
-  Conversations are stored persistently (using JSON files and FAISS for indexing) to enable context-aware responses and retrieval of chat history.
+  Conversations are stored persistently (using JSON files and SQlite databases for indexing) to enable context-aware responses and retrieval of chat history.
 
 - **Realistic Voice Generation**:  
   Enjoy lifelike responses via ElevenLabs text-to-speech synthesis.
@@ -198,7 +198,6 @@ By using ALTER EGO, you agree to the following:
 - **ElevenLabs**: [ElevenLabs](https://www.elevenlabs.io)
 - **roberta-base-go_emotions**: [Hugging Face](https://huggingface.co/SamLowe/roberta-base-go_emotions)
 - **Sentence-Transformers (MiniLM-L6-v2)**: [Hugging Face](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2)
-- **FAISS**: [FAISS GitHub](https://github.com/facebookresearch/faiss)
 - **Electron & NodeJS**: [Electron](https://electronjs.org)
 
 ---
