@@ -8,7 +8,8 @@ from flask import Flask, request, jsonify
 from waitress import serve
 from datetime import datetime, timezone
 import time
-# We add the current directory to sys.path so we can import local modules (like emotions_api, keys_util, etc.).
+
+# Add the current directory to sys.path once for local imports.
 sys.path.append(os.path.dirname(__file__))
 
 # Local imports
@@ -18,9 +19,6 @@ from db_memory import SQLMemory
 from ollama_manager import start_server, stop_server, query_ollama
 from openai_manager import query_openai, warmup_openai
 from memory_manager import append_chat_message, get_chat_history_path, load_chat_history, save_chat_history
-
-# Ensure current directory is in sys.path
-sys.path.append(os.path.dirname(__file__))
 
 # Flask App Setup
 app = Flask(__name__)
@@ -33,6 +31,21 @@ openai_enabled = True if mode == "openai" else False
 # Track warm-up status to avoid repeating expensive operations
 warm_up_completed = False
 memory_managers = {}
+
+# Global cache for voice models
+VOICE_MODELS = None
+
+def get_voice_models():
+    global VOICE_MODELS
+    if VOICE_MODELS is None:
+        models_path = os.path.join(os.path.dirname(__file__), "../persistentdata/elevenlabs_models.json")
+        try:
+            with open(models_path, "r", encoding="utf-8") as f:
+                VOICE_MODELS = json.load(f)
+        except Exception as e:
+            logging.error(f"Error reading elevenlabs_models.json: {e}")
+            VOICE_MODELS = {}
+    return VOICE_MODELS
 
 def get_memory_manager(persona_name):
     """Get or create the memory manager for a persona"""
@@ -112,11 +125,9 @@ def query():
                 # Simplified Ollama warm-up with timeout
                 final_prompt = "User: hello\nAssistant:"
                 answer = query_ollama(final_prompt, persona_content=persona_prompt, timeout=max_warm_up_time)
-
             else:
                 answer = warmup_openai()
                 
-            # Mark as completed on success
             warm_up_completed = True
             logging.info(f"Warm-up completed successfully in {time.time() - start_time:.2f}s")
             
@@ -128,7 +139,6 @@ def query():
             })
             
         except Exception as e:
-            # If warm-up fails, log but allow continuing
             logging.error(f"Warm-up failed: {str(e)}")
             if time.time() - start_time >= max_warm_up_time:
                 logging.warning("Warm-up timed out, continuing anyway")
@@ -147,19 +157,16 @@ def query():
         ltm_results = memory.search_similar(user_query, top_k=3)
         relevant_context = ""
         
-        # Only include memories with reasonable similarity
         if ltm_results:
             relevant_memories = []
             for (chunk_text, similarity, _) in ltm_results:
-                if similarity > 0.4:  # Only use if reasonably similar
+                if similarity > 0.4:
                     relevant_memories.append(f"• {chunk_text.strip()} (relevance: {similarity:.2f})")
-            
             if relevant_memories:
                 relevant_context = "Relevant previous conversations:\n" + "\n".join(relevant_memories)
             else:
                 relevant_context = ""
 
-        # Query using Ollama
         if mode == "ollama":
             recent_exchanges = stm_buffer[-6:] if len(stm_buffer) >= 6 else stm_buffer
             memory_text = ""
@@ -169,7 +176,6 @@ def query():
                 else:
                     memory_text += f"Assistant: {entry['content']}\n"
             
-            # Only include relevant context if it exists
             if relevant_context:
                 final_prompt = (
                     f"{relevant_context}\n\n"
@@ -186,40 +192,27 @@ def query():
             if answer.startswith("Error:"):
                 return jsonify({"error": answer}), 400
             
-            # Add to memory
             memory.add_memory(user_query, role="user")
             memory.add_memory(answer, role="assistant")
-            # Also call append_chat_message for compatibility
         
-        # Query using OpenAI
         elif mode == "openai" and openai_enabled:
             answer = query_openai(user_query, persona_prompt, stm_buffer, relevant_context)
-            
-            # Add to memory
             memory.add_memory(user_query, role="user")
             memory.add_memory(answer, role="assistant")
         else:
             return jsonify({"error": "Backend not supported"}), 400
 
-        # Mark successful query as warm-up completion if not already done
         if not warm_up_completed:
             warm_up_completed = True
             logging.info("First successful query - considering system warmed up")
 
-        # Emotion Detection
         query_emotions_list = detect_emotions([user_query])
         response_emotions_list = detect_emotions([answer])
         query_emotions = query_emotions_list[0] if query_emotions_list else {}
         response_emotions = response_emotions_list[0] if response_emotions_list else {}
 
-        # TTS
-        models_path = os.path.join(os.path.dirname(__file__), "../persistentdata/elevenlabs_models.json")
-        try:
-            with open(models_path, "r", encoding="utf-8") as f:
-                voice_models = json.load(f)
-        except Exception as e:
-            logging.error(f"Error reading elevenlabs_models.json: {e}")
-            voice_models = {}
+        # TTS using cached voice models
+        voice_models = get_voice_models()
         audio_base64 = None
         if voice_model_name and voice_model_name in voice_models:
             voice_id = voice_models[voice_model_name]

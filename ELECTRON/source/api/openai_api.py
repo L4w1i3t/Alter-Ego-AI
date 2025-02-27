@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.DEBUG)
 keys = load_keys()
 openai.api_key = keys.get("OPENAI_API_KEY", "")
 
-def get_chat_completion(messages, model="chatgpt-4o-latest", temperature=0.7):
+def get_chat_completion(messages: list[dict], model: str = "chatgpt-4o-latest", temperature: float = 0.7) -> str:
     """
     Generate a response from OpenAI's chat.completions endpoint using a list of messages.
     
@@ -34,11 +34,11 @@ def get_chat_completion(messages, model="chatgpt-4o-latest", temperature=0.7):
         response = openai.chat.completions.create(
             model=model,
             messages=messages,
-            temperature=temperature
+            temperature=temperature,
+            timeout=30  # Added timeout to prevent hanging
         )
         # Return the text from the first choice
         return response.choices[0].message.content.strip()
     except Exception as e:
-        # Log any errors that occur during the API call
-        logging.error("OpenAI API Error: %s", e)
+        logging.exception("OpenAI API Error:")
         return f"An error occurred: {e}"

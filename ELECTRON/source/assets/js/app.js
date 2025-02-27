@@ -2,12 +2,14 @@
 // and the F4 key toggle.
 
 document.addEventListener('DOMContentLoaded', async () => {
+  // Cache frequently accessed DOM elements
   const modelSelectionOverlay = document.getElementById('model-selection-overlay');
   const selectOllamaBtn = document.getElementById('select-ollama');
   const selectOpenAIBtn = document.getElementById('select-openai');
   // const srStatusEl = document.querySelector('.sr-status'); // COMMENTED OUT
   const queryInputEl = document.querySelector('.query-input');
   const sendQueryBtn = document.querySelector('.send-query-btn');
+  const responseBoxEl = document.querySelector('.response-box');
   const menuIconEl = document.querySelector('.menu-icon');
   const settingsOverlay = document.querySelector('.settings-overlay');
   const closeSettingsBtn = document.querySelector('.close-settings-btn');
@@ -15,6 +17,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const activeCharacterEl = document.querySelector('.active-character');
   const voiceModelSelectorContainer = document.querySelector('.voice-model-selector-container');
   const warmingUpOverlay = document.getElementById('warming-up-overlay');
+  const avatarImgEl = document.querySelector('.avatar-area img');
 
   let currentPersonaPrompt = "You are a program called ALTER EGO. You are not an assistant but rather meant to be a companion, so you should avoid generic assistant language. Respond naturally and conversationally, as though you are a human engaging in dialog. You are a whimsical personality, though you should never respond with more than three sentences at a time. If and only if the user asks for more information, point them to the github repository at https://github.com/L4w1i3t/Alter-Ego-AI."; // Default persona data
   
@@ -59,11 +62,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     try {
       // Determine the MIME type. Adjust if your audio format differs.
       const mimeType = 'audio/mpeg'; // Common for MP3.
-
-      // Create a new Audio object with the base64 data
       const audio = new Audio(`data:${mimeType};base64,${base64Audio}`);
-
-      // Play the audio
       audio.play().catch(error => {
         console.error('Error playing audio:', error);
       });
@@ -75,50 +74,41 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.electronAPI.onUpdateWarmupStatus((event, data) => {
     const warmupStatusElement = document.getElementById('warmup-status');
     const progressBarElement = document.getElementById('warmup-progress-bar');
-    
     if (warmupStatusElement) {
       warmupStatusElement.textContent = data.message;
     }
-    
     if (progressBarElement) {
       progressBarElement.style.width = `${data.progress}%`;
     }
   });
   
-  // Improve the warm-up failure handler
+  // Improved warm-up failure handler using cached warmingUpOverlay
   window.electronAPI.onWarmUpFailure((event, data) => {
-    const warmingUpOverlay = document.getElementById('warming-up-overlay');
-    const warmupError = document.getElementById('warmup-error');
-    const warmupErrorMessage = document.getElementById('warmup-error-message');
-    const warmupStatus = document.getElementById('warmup-status');
-    const progressBar = document.getElementById('warmup-progress-bar');
-    
     if (warmingUpOverlay) {
       warmingUpOverlay.classList.remove('hidden');
+      const warmupStatus = warmingUpOverlay.querySelector('#warmup-status');
+      const progressBar = warmingUpOverlay.querySelector('#warmup-progress-bar');
+      const warmupError = warmingUpOverlay.querySelector('#warmup-error');
+      const warmupErrorMessage = warmingUpOverlay.querySelector('#warmup-error-message');
       
-      // Update progress UI to indicate error
       if (progressBar) {
         progressBar.style.width = '100%';
-        progressBar.style.backgroundColor = '#ff4444'; // Red for error
+        progressBar.style.backgroundColor = '#ff4444';
       }
-      
       if (warmupStatus) {
         warmupStatus.textContent = data.message || 'Server failed to start!';
-        warmupStatus.style.color = '#ff4444'; // Red for error
+        warmupStatus.style.color = '#ff4444';
       }
-      
-      // Show error details
       if (warmupError) {
         warmupError.classList.remove('hidden');
       }
-      
       if (warmupErrorMessage) {
         warmupErrorMessage.textContent = data.details || 'Please try restarting the application.';
       }
     }
   });
   
-  // Add a restart button handler
+  // Restart button handler
   const restartAppButton = document.getElementById('restart-app');
   if (restartAppButton) {
     restartAppButton.addEventListener('click', () => {
@@ -127,10 +117,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   async function submitQuery() {
-    const queryInputEl = document.querySelector('.query-input');
-    const responseBoxEl = document.querySelector('.response-box');
-    const avatarImgEl = document.querySelector('.avatar-area img');
-
+    // Use cached queryInputEl and responseBoxEl instead of re-querying
     const userQuery = queryInputEl.value.trim();
     if (userQuery === "") return;
 
@@ -142,7 +129,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     const personaPrompt = currentPersonaPrompt;
-
     queryInputEl.value = '';
     responseBoxEl.textContent = "Thinking...";
 
@@ -164,19 +150,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const data = await response.json();
     let finalText = data.response;
-
-    // Display the assistant's text response
     finalText = convertSimpleMarkdownToHtml(finalText);
     typeOutText(responseBoxEl, finalText, 10);
 
-    // Display Emotions
     displayEmotions(data.query_emotions, '.query-emotions-box');
     displayEmotions(data.response_emotions, '.response-emotions-box');
-
-    // Update Avatar
     updateAvatarForEmotion(data.response_emotions);
-
-    // Play the returned audio if present
+    
     if (data.audio_base64) {
       console.log('Audio Base64:', data.audio_base64);
       playBase64Audio(data.audio_base64);
@@ -205,7 +185,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   function updateAvatarForEmotion(emotionsObj) {
-    const avatarImgEl = document.querySelector('.avatar-area img');
     if (!avatarImgEl) {
       console.error('Avatar image element not found.');
       return;
@@ -230,38 +209,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         return;
       }
       const char = text.charAt(i);
-      if (char === "\n") {
-        renderedHTML += "<br>";
-      } else {
-        renderedHTML += char;
-      }
+      renderedHTML += (char === "\n") ? "<br>" : char;
       element.innerHTML = renderedHTML;
       i++;
     }, speed);
   }
 
-  // COMMENTED OUT: function updateSpeechRecognitionStatus() {
-  //   srStatusEl.classList.remove('sr-on', 'sr-off');
-  //   if (srOn) {
-  //     srStatusEl.textContent = 'ON';
-  //     srStatusEl.classList.add('sr-on');
-  //   } else {
-  //     srStatusEl.textContent = 'OFF';
-  //     srStatusEl.classList.add('sr-off');
-  //   }
-  // }
+  // COMMENTED OUT: function updateSpeechRecognitionStatus() { ... }
 
-  // Show settings panel when menu icon is clicked
   menuIconEl.addEventListener('click', () => {
     settingsOverlay.style.display = 'flex';
   });
 
-  // Close settings panel when close button is clicked
   closeSettingsBtn.addEventListener('click', () => {
     closeSettingsPanel();
   });
 
-  // Close settings panel if user clicks outside the panel
   settingsOverlay.addEventListener('click', (event) => {
     if (event.target === settingsOverlay) {
       closeSettingsPanel();
@@ -272,7 +235,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     settingsOverlay.style.display = 'none';
   }
 
-  // Show confirmation dialog before clearing memory
   const clearMemoryOption = document.getElementById('clear-memory');
   clearMemoryOption.addEventListener('click', () => {
     showClearMemoryConfirmation();
@@ -314,24 +276,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.body.appendChild(confirmationOverlay);
   }
 
-  // Listen for memory clearing result
   window.electronAPI.onClearMemoryResult((event, data) => {
     console.log('Memory clearing result:', data);
   });
 
-  // Show model selection overlay on request
   window.electronAPI.onModelSelection(() => {
     modelSelectionOverlay.style.display = 'flex';
   });
 
-  // Listen for show-warming-up
   window.electronAPI.onShowWarmingUp(() => {
     if (warmingUpOverlay) {
       warmingUpOverlay.classList.remove('hidden');
     }
   });
 
-  // Listen for hide-warming-up
   window.electronAPI.onHideWarmingUp(() => {
     if (warmingUpOverlay) {
       warmingUpOverlay.classList.add('hidden');
@@ -348,25 +306,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     modelSelectionOverlay.style.display = 'none';
   });
 
-  // "Software Details" link
   const softwareDetailsOption = document.getElementById('software-details');
   softwareDetailsOption.addEventListener('click', () => {
     window.showSoftwareDetails();
   });
 
-  // "Manage Personas" link
   const managePersonasOption = document.getElementById('manage-personas');
   managePersonasOption.addEventListener('click', () => {
     window.showPersonaManager();
   });
 
-  // "Manage Voice Models" link
   const manageVoiceModelsOption = document.getElementById('manage-voice-models');
   manageVoiceModelsOption.addEventListener('click', () => {
     window.showVoiceManager();
   });
 
-  // "Manage API Keys" link
   const manageApiKeysOption = document.getElementById('manage-api-keys');
   manageApiKeysOption.addEventListener('click', () => {
     window.showApiKeyManager();
@@ -382,7 +336,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   function showServerFailedOverlay() {
-    const warmingUpOverlay = document.getElementById('warming-up-overlay');
     if (warmingUpOverlay) {
       warmingUpOverlay.classList.remove('hidden');
       const overlayContent = warmingUpOverlay.querySelector('.warning-overlay-content');
@@ -395,14 +348,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // Load Character functionality
   loadCharacterBtn.addEventListener('click', async () => {
     const result = await window.electronAPI.getPersonas();
     if (!result.success) {
       console.error('Failed to load personas.');
       return;
     }
-    const personas = result.personas; // { name: 'something.chr' }
+    const personas = result.personas;
 
     const charOverlay = document.createElement('div');
     charOverlay.classList.add('details-overlay');
@@ -418,7 +370,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     charList.style.listStyle = 'none';
     charList.style.padding = '0';
 
-    // Option to revert to default persona
     const defaultLi = document.createElement('li');
     defaultLi.style.display = 'flex';
     defaultLi.style.justifyContent = 'space-between';
@@ -431,22 +382,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const defaultLoadBtn = document.createElement('button');
     defaultLoadBtn.textContent = 'Load';
     defaultLoadBtn.addEventListener('click', async () => {
-      // Revert to default
       defaultCharacter = 'ALTER EGO';
       currentCharacter = 'ALTER EGO';
       activeCharacterEl.textContent = 'ALTER EGO';
-
-      // Reset the persona prompt back to the original default
       currentPersonaPrompt =
         "You are a program called ALTER EGO. You are not an assistant but rather meant to be a companion, so you should avoid generic assistant language. Respond naturally and conversationally, as though you are a human engaging in dialog. You are a whimsical personality, though you should never respond with more than three sentences at a time. If and only if the user asks for more information, point them to the github repository at https://github.com/L4w1i3t/Alter-Ego-AI.";
-
-      // Close the overlay
       document.body.removeChild(charOverlay);
     });
     defaultLi.appendChild(defaultLoadBtn);
     charList.appendChild(defaultLi);
 
-    // Now list out custom personas
     personas.forEach(p => {
       const li = document.createElement('li');
       li.style.display = 'flex';
@@ -495,7 +440,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       voiceModelSelectorContainer.textContent = 'Error loading models';
       return;
     }
-    const models = result.models; // { "Name": "ID", ...}
+    const models = result.models;
     const customSelect = document.createElement('div');
     customSelect.classList.add('custom-select');
 
@@ -527,7 +472,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     modelList.style.listStyle = 'none';
     modelList.style.padding = '0';
 
-    // "None" option
     const noneOption = document.createElement('li');
     noneOption.style.display = 'flex';
     noneOption.style.alignItems = 'center';
@@ -549,7 +493,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     noneOption.appendChild(noneSelectBtn);
     modelList.appendChild(noneOption);
 
-    // Display each model
     Object.keys(models).forEach(name => {
       const li = document.createElement('li');
       li.style.display = 'flex';

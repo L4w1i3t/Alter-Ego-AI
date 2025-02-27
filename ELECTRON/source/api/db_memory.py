@@ -5,9 +5,10 @@ import numpy as np
 import logging
 from datetime import datetime, timezone
 from sentence_transformers import SentenceTransformer
+from typing import List, Tuple, Any
 
 class SQLMemory:
-    def __init__(self, model_name="sentence-transformers/all-MiniLM-L6-v2", persona_name="default"):
+    def __init__(self, model_name: str = "sentence-transformers/all-MiniLM-L6-v2", persona_name: str = "default") -> None:
         """
         Initialize a SQL-based memory system for each persona.
         """
@@ -38,46 +39,38 @@ class SQLMemory:
         self._initialize_database()
         
         # Cache for short-term memory
-        self.stm_cache = []
-        self.max_stm_size = 10
+        self.stm_cache: List[dict] = []
+        self.max_stm_size = 3
         
         # Load existing chat history into STM buffer
         self._load_stm_from_history()
         
-    def _initialize_database(self):
+    def _initialize_database(self) -> None:
         """Create database tables if they don't exist."""
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            # Create memory entries table with vector embeddings
-            cursor.execute('''
-            CREATE TABLE IF NOT EXISTS memory_entries (
-                id INTEGER PRIMARY KEY,
-                timestamp TEXT,
-                text TEXT,
-                embedding BLOB,
-                role TEXT,
-                type TEXT,
-                importance REAL DEFAULT 1.0
-            )''')
-            
-            conn.commit()
-            conn.close()
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute('''
+                CREATE TABLE IF NOT EXISTS memory_entries (
+                    id INTEGER PRIMARY KEY,
+                    timestamp TEXT,
+                    text TEXT,
+                    embedding BLOB,
+                    role TEXT,
+                    type TEXT,
+                    importance REAL DEFAULT 1.0
+                )''')
+                conn.commit()
         except Exception as e:
             logging.error(f"Error initializing database: {e}")
             
-    def _load_stm_from_history(self):
+    def _load_stm_from_history(self) -> None:
         """Load recent chat history into STM buffer."""
         try:
             if os.path.exists(self.chat_history_path):
                 with open(self.chat_history_path, "r", encoding="utf-8") as f:
                     history = json.load(f)
-                    
-                # Get most recent exchanges (up to max_stm_size)
                 recent = history[-self.max_stm_size:] if history else []
-                
-                # Add to STM cache
                 for entry in recent:
                     if "role" in entry and "content" in entry:
                         self.stm_cache.append({
@@ -87,7 +80,7 @@ class SQLMemory:
         except Exception as e:
             logging.error(f"Error loading chat history into STM: {e}")
             
-    def add_memory(self, text, role="assistant", memory_type="conversation"):
+    def add_memory(self, text: str, role: str = "assistant", memory_type: str = "conversation") -> None:
         """Add a memory entry with its embedding."""
         if not text or not isinstance(text, str):
             logging.warning(f"Attempted to add invalid memory: {text}")
@@ -95,7 +88,7 @@ class SQLMemory:
             
         timestamp = datetime.now(timezone.utc).isoformat()
         
-        # Add to chat history JSON for JS compatibility
+        # Update JSON chat history for JS compatibility
         if role in ["user", "assistant"] and memory_type == "conversation":
             try:
                 history = []
@@ -105,17 +98,14 @@ class SQLMemory:
                             history = json.load(f)
                     except json.JSONDecodeError:
                         logging.warning("Invalid JSON in chat history file, creating new")
-                
                 entry = {
                     "timestamp": timestamp,
                     "role": role,
                     "content": text
                 }
                 history.append(entry)
-                
                 with open(self.chat_history_path, "w", encoding="utf-8") as f:
                     json.dump(history, f, indent=2)
-                
                 # Update STM buffer
                 self.stm_cache.append({"role": role, "content": text})
                 if len(self.stm_cache) > self.max_stm_size:
@@ -129,21 +119,17 @@ class SQLMemory:
             if self.model:
                 embedding = self.model.encode(text, convert_to_numpy=True)
                 embedding_bytes = embedding.tobytes()
-            
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            cursor.execute(
-                "INSERT INTO memory_entries (timestamp, text, embedding, role, type) VALUES (?, ?, ?, ?, ?)",
-                (timestamp, text, embedding_bytes, role, memory_type)
-            )
-            
-            conn.commit()
-            conn.close()
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    "INSERT INTO memory_entries (timestamp, text, embedding, role, type) VALUES (?, ?, ?, ?, ?)",
+                    (timestamp, text, embedding_bytes, role, memory_type)
+                )
+                conn.commit()
         except Exception as e:
             logging.error(f"Error adding memory to database: {e}")
         
-    def search_similar(self, query, top_k=3):
+    def search_similar(self, query: str, top_k: int = 3) -> List[Tuple[Any, float, int]]:
         """Find memories similar to the query using vector similarity."""
         if not query or not isinstance(query, str):
             return []
@@ -154,51 +140,31 @@ class SQLMemory:
             
         try:
             query_embedding = self.model.encode(query, convert_to_numpy=True)
-            
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            # Get memories with embeddings
-            cursor.execute("SELECT id, text, embedding, importance FROM memory_entries WHERE embedding IS NOT NULL")
-            
-            results = []
-            for mem_id, text, embedding_bytes, importance in cursor.fetchall():
-                if not embedding_bytes:
-                    continue
-                    
-                embedding = np.frombuffer(embedding_bytes, dtype=np.float32)
-                
-                # Compute cosine similarity
-                norm_q = np.linalg.norm(query_embedding)
-                norm_doc = np.linalg.norm(embedding)
-                
-                if norm_q == 0 or norm_doc == 0:
-                    similarity = 0
-                else:
-                    dot_product = np.dot(query_embedding, embedding)
-                    similarity = dot_product / (norm_q * norm_doc)
-                
-                # Apply importance weighting
-                weighted_similarity = similarity * (importance or 1.0)
-                
-                if similarity > 0.3:  # Only include actually relevant memories
-                    results.append((text, weighted_similarity, mem_id))
-            
-            conn.close()
-            
-            # Sort by similarity score (highest first)
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT id, text, embedding, importance FROM memory_entries WHERE embedding IS NOT NULL")
+                results = []
+                for mem_id, text, embedding_bytes, importance in cursor.fetchall():
+                    if not embedding_bytes:
+                        continue
+                    embedding = np.frombuffer(embedding_bytes, dtype=np.float32)
+                    norm_q = np.linalg.norm(query_embedding)
+                    norm_doc = np.linalg.norm(embedding)
+                    similarity = 0 if norm_q == 0 or norm_doc == 0 else np.dot(query_embedding, embedding) / (norm_q * norm_doc)
+                    weighted_similarity = similarity * (importance or 1.0)
+                    if similarity > 0.3:
+                        results.append((text, weighted_similarity, mem_id))
             results.sort(key=lambda x: x[1], reverse=True)
             return results[:top_k]
-            
         except Exception as e:
             logging.error(f"Error searching similar memories: {e}")
             return []
     
-    def get_stm(self):
+    def get_stm(self) -> List[dict]:
         """Get the short-term memory buffer."""
         return self.stm_cache
     
-    def get_chat_history(self):
+    def get_chat_history(self) -> List[dict]:
         """Get chat history from JSON file."""
         try:
             if os.path.exists(self.chat_history_path):
@@ -209,28 +175,21 @@ class SQLMemory:
             logging.error(f"Error reading chat history: {e}")
             return []
     
-    def clear(self):
+    def clear(self) -> None:
         """Clear all memories for this persona."""
         try:
-            # Clear database
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            cursor.execute("DELETE FROM memory_entries")
-            conn.commit()
-            conn.close()
-            
-            # Clear JSON chat history
+            with sqlite3.connect(self.db_path) as conn:
+                cursor = conn.cursor()
+                cursor.execute("DELETE FROM memory_entries")
+                conn.commit()
             with open(self.chat_history_path, "w", encoding="utf-8") as f:
                 json.dump([], f)
-            
-            # Clear STM buffer
             self.stm_cache = []
-            
             logging.info(f"Cleared all memories for persona {self.persona_name}")
         except Exception as e:
             logging.error(f"Error clearing memories: {e}")
 
-    def search(self, query, top_k=3):
+    def search(self, query: str, top_k: int = 3) -> List[Tuple[Any, float, int]]:
         """
         Compatibility method that matches the signature of EmbeddingMemory.search()
         """

@@ -8,6 +8,8 @@ const path = require('path');
 const fs = require('fs');
 const { spawn, exec } = require('child_process');
 const commandExists = require('command-exists');
+const util = require('util');
+const execProm = util.promisify(exec);
 require('./ipcHandlers');
 
 // Globals
@@ -86,6 +88,7 @@ async function runSetupWizard() {
       // Our checks
       await checkOllama();
       await checkGoEmotionsModel();
+      await checkMiniLMModel();
 
       wizardLog('All Windows prerequisites met via embedded environment.');
     } else {
@@ -98,6 +101,7 @@ async function runSetupWizard() {
 
       await checkOllama();
       await checkGoEmotionsModel();
+      await checkMiniLMModel();
 
       wizardLog('All requirements have been met on Linux/Mac.');
     }
@@ -163,45 +167,37 @@ function runCommand(cmd, args) {
 /*********************************************************************
  * 2B) PIP CHECK
  *********************************************************************/
-function ensurePipInstalled(pythonCmd) {
-  return new Promise((resolve, reject) => {
-    exec(`${pythonCmd} -m pip --version`, (error, stdout) => {
-      if (error) {
-        wizardLog('pip not found. Trying "ensurepip --upgrade"...');
-        exec(`${pythonCmd} -m ensurepip --upgrade`, (err2) => {
-          if (err2) {
-            return reject(new Error(`Failed to install pip: ${err2.message}`));
-          }
-          wizardLog('pip installed successfully.');
-          resolve();
-        });
-      } else {
-        wizardLog(`Found pip: ${stdout.trim()}`);
-        resolve();
-      }
-    });
-  });
+async function ensurePipInstalled(pythonCmd) {
+  try {
+    const { stdout } = await execProm(`${pythonCmd} -m pip --version`);
+    wizardLog(`Found pip: ${stdout.trim()}`);
+  } catch (error) {
+    wizardLog('pip not found. Trying "ensurepip --upgrade"...');
+    try {
+      await execProm(`${pythonCmd} -m ensurepip --upgrade`);
+      wizardLog('pip installed successfully.');
+    } catch (err2) {
+      throw new Error(`Failed to install pip: ${err2.message}`);
+    }
+  }
 }
 
 /*********************************************************************
  * 2C) INSTALL REQUIREMENTS.TXT
  *********************************************************************/
-function installRequirements(pythonCmd) {
-  return new Promise((resolve, reject) => {
-    const reqPath = path.join(__dirname, 'api', 'requirements.txt');
-    if (!fs.existsSync(reqPath)) {
-      wizardLog(`No requirements.txt found at ${reqPath}, skipping...`);
-      return resolve();
-    }
-    wizardLog(`Installing dependencies from ${reqPath}...`);
-    exec(`${pythonCmd} -m pip install --upgrade -r "${reqPath}"`, (error, stdout, stderr) => {
-      if (error) {
-        return reject(new Error(`pip install failed: ${stderr || error.message}`));
-      }
-      wizardLog('Python dependencies installed:\n' + stdout);
-      resolve();
-    });
-  });
+async function installRequirements(pythonCmd) {
+  const reqPath = path.join(__dirname, 'api', 'requirements.txt');
+  if (!fs.existsSync(reqPath)) {
+    wizardLog(`No requirements.txt found at ${reqPath}, skipping...`);
+    return;
+  }
+  wizardLog(`Installing dependencies from ${reqPath}...`);
+  try {
+    const { stdout } = await execProm(`${pythonCmd} -m pip install --upgrade -r "${reqPath}"`);
+    wizardLog('Python dependencies installed:\n' + stdout);
+  } catch (error) {
+    throw new Error(`pip install failed: ${error.stderr || error.message}`);
+  }
 }
 
 /*********************************************************************
@@ -294,45 +290,62 @@ function stopOllamaServer() {
 /*********************************************************************
  * 2E) CHECK GO EMOTIONS MODEL AND MINILM-L6
  *********************************************************************/
-function checkGoEmotionsModel() {
+// Helper to download a model from Hugging Face
+function downloadModel(modelDisplayName, scriptFileName, successMsg, failureMsg, stdoutPrefix, stderrPrefix) {
   return new Promise((resolve, reject) => {
     const home = os.homedir();
-    const modelPath = path.join(
-      home,
-      '.cache',
-      'huggingface',
-      'hub',
-      'models--SamLowe--roberta-base-go_emotions'
-    );
-
+    let modelPath;
+    if (modelDisplayName === 'Roberta-base-go_emotions') {
+      modelPath = path.join(home, '.cache', 'huggingface', 'hub', 'models--SamLowe--roberta-base-go_emotions');
+    } else if (modelDisplayName === 'MiniLM-L6-v2') {
+      modelPath = path.join(home, '.cache', 'huggingface', 'hub', 'models--sentence-transformers--all-MiniLM-L6-v2');
+    }
     if (fs.existsSync(modelPath)) {
-      wizardLog('Roberta-base-go_emotions model already cached.');
-      resolve();
+      wizardLog(`${modelDisplayName} model already cached.`);
+      return resolve();
     } else {
-      wizardLog('Roberta-base-go_emotions not found locally. Downloading from Hugging Face...');
-
-      const pythonScriptPath = path.join(__dirname, 'install', 'emotionpipe.py');
+      wizardLog(`${modelDisplayName} not found locally. Downloading from Hugging Face...`);
+      const pythonScriptPath = path.join(__dirname, 'install', scriptFileName);
       const pythonCmd = process.platform === 'win32' ? pythonExecutable : 'python';
-
       const downloader = spawn(pythonCmd, [pythonScriptPath]);
-
       downloader.stdout.on('data', (data) => {
-        wizardLog(`[GoEmotions STDOUT] ${data.toString()}`);
+        wizardLog(`[${stdoutPrefix} STDOUT] ${data.toString()}`);
       });
       downloader.stderr.on('data', (data) => {
-        wizardLog(`[GoEmotions STDERR] ${data.toString()}`);
+        wizardLog(`[${stderrPrefix} STDERR] ${data.toString()}`);
       });
-
       downloader.on('close', (code) => {
         if (code === 0) {
-          wizardLog('Go Emotions model downloaded successfully.');
+          wizardLog(successMsg);
           resolve();
         } else {
-          reject(new Error('Failed to download Roberta-base-go_emotions model.'));
+          reject(new Error(failureMsg));
         }
       });
     }
   });
+}
+
+function checkGoEmotionsModel() {
+  return downloadModel(
+    'Roberta-base-go_emotions',
+    'emotionpipe.py',
+    'Go Emotions model downloaded successfully.',
+    'Failed to download Roberta-base-go_emotions model.',
+    'GoEmotions',
+    'GoEmotions'
+  );
+}
+
+function checkMiniLMModel() {
+  return downloadModel(
+    'MiniLM-L6-v2',
+    'mempipe.py',
+    'MiniLM-L6-v2 model downloaded successfully.',
+    'Failed to download MiniLM-L6-v2 model.',
+    'MiniLM',
+    'MiniLM'
+  );
 }
 
 /*********************************************************************
@@ -370,7 +383,8 @@ function createMainWindow() {
   });
 
   ipcMain.on('model-selected', (event, modeChoice) => {
-    BrowserWindow.getFocusedWindow().webContents.send('show-warming-up');
+    // Use mainWindow reference instead of getFocusedWindow
+    mainWindow.webContents.send('show-warming-up');
     isOllamaUsed = (modeChoice === 'ollama');
     startPythonServer(isOllamaUsed ? 'ollama' : 'openai');
   });
@@ -386,12 +400,12 @@ function startPythonServer(modeChoice) {
   const env = { ...process.env, MODEL_BACKEND: modeChoice };
 
   // Notify the frontend that we're starting the server
-  BrowserWindow.getAllWindows().forEach(win => {
-    win.webContents.send('update-warmup-status', {
+  if (mainWindow) {
+    mainWindow.webContents.send('update-warmup-status', {
       message: 'Starting Python server...',
       progress: 10
     });
-  });
+  }
 
   pythonProcess = spawn(pythonCmd, [serverScriptPath], {
     cwd: path.join(__dirname, 'api'),
@@ -431,12 +445,12 @@ function startPythonServer(modeChoice) {
     
     // If server exits unexpectedly during warmup
     if (code !== 0) {
-      BrowserWindow.getAllWindows().forEach(win => {
-        win.webContents.send('warm-up-failure', {
+      if (mainWindow) {
+        mainWindow.webContents.send('warm-up-failure', {
           message: 'Server exited unexpectedly',
           details: serverOutput
         });
-      });
+      }
     }
   });
 
@@ -445,12 +459,12 @@ function startPythonServer(modeChoice) {
 }
 
 function updateWarmupProgress(message, progressPercent) {
-  BrowserWindow.getAllWindows().forEach(win => {
-    win.webContents.send('update-warmup-status', {
+  if (mainWindow) {
+    mainWindow.webContents.send('update-warmup-status', {
       message,
       progress: progressPercent
     });
-  });
+  }
 }
 
 async function checkServerReady() {
@@ -463,7 +477,7 @@ async function checkServerReady() {
 
   while (attempts < maxAttempts) {
     try {
-      updateWarmupProgress(`Checking server readiness (Attempt ${attempts + 1}/${maxAttempts})...`, 
+      updateWarmupProgress(`Checking server readiness (Attempt ${attempts + 1}/${maxAttempts})...`,
         Math.min(70 + Math.floor((attempts / maxAttempts) * 20), 90));
         
       const response = await fetch('http://127.0.0.1:5000/query', {
@@ -479,9 +493,9 @@ async function checkServerReady() {
         
         // Small delay so users can see the "ready" message
         setTimeout(() => {
-          BrowserWindow.getAllWindows().forEach(win => {
-            win.webContents.send('hide-warming-up');
-          });
+          if (mainWindow) {
+            mainWindow.webContents.send('hide-warming-up');
+          }
         }, 1500);
         
         return; // Success! Exit the function
@@ -498,12 +512,12 @@ async function checkServerReady() {
     
     // If we've reached the maximum attempts, inform the user
     if (attempts >= maxAttempts) {
-      BrowserWindow.getAllWindows().forEach(win => {
-        win.webContents.send('warm-up-failure', {
+      if (mainWindow) {
+        mainWindow.webContents.send('warm-up-failure', {
           message: 'Server warmup timed out after multiple attempts',
           details: 'The server is taking too long to start. This could be due to hardware limitations or a configuration issue.'
         });
-      });
+      }
       return;
     }
     
@@ -563,8 +577,8 @@ ipcMain.on('restart-app', () => {
 const maxAppStartupTime = 600000; // 10 minutes
 // Add overall app timeout safety mechanism
 setTimeout(() => {
-  if (BrowserWindow.getAllWindows().length > 0) {
-    BrowserWindow.getAllWindows()[0].webContents.send('warm-up-failure', {
+  if (mainWindow) {
+    mainWindow.webContents.send('warm-up-failure', {
       message: 'Application startup timed out',
       details: 'The application took too long to start. This might be due to hardware limitations or unexpected errors.'
     });
