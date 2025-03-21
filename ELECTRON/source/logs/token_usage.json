@@ -1,0 +1,10 @@
+[
+  {
+    "timestamp": "2025-03-21T14:37:49.198478",
+    "model": "gpt-4o-mini",
+    "prompt_tokens": 497,
+    "completion_tokens": 11,
+    "total_tokens": 508,
+    "query_type": "standard"
+  }
+]

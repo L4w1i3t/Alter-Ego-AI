@@ -82,31 +82,43 @@
   </div>
 
   <script>
-    // Minimal: listen for logs from main.js via IPC
     const { ipcRenderer } = require('electron');
 
-    function addLogLine(msg, isError=false) {
+    function addLogLine(msg, isError = false) {
       const logContainer = document.getElementById('logContainer');
       const div = document.createElement('div');
       div.classList.add('step');
       if (isError) div.classList.add('error');
       div.textContent = msg;
       logContainer.appendChild(div);
-      logContainer.scrollTop = logContainer.scrollHeight; // auto-scroll
+      logContainer.scrollTop = logContainer.scrollHeight;
     }
 
-    ipcRenderer.on('wizard-log', (event, msg) => {
+    function wizardLogHandler(event, msg) {
       addLogLine(msg);
-    });
+    }
 
-    ipcRenderer.on('wizard-error', (event, msg) => {
+    function wizardErrorHandler(event, msg) {
       addLogLine(msg, true);
       document.getElementById('info').textContent = 'Setup encountered an error!';
+    }
+
+    function wizardDoneHandler() {
+      document.getElementById('info').textContent = 'Setup complete! Launching main window...';
+    }
+
+    // Add listeners
+    ipcRenderer.on('wizard-log', wizardLogHandler);
+    ipcRenderer.on('wizard-error', wizardErrorHandler);
+    ipcRenderer.on('wizard-done', wizardDoneHandler);
+
+    // Clean up on unload
+    window.addEventListener('beforeunload', () => {
+      ipcRenderer.removeListener('wizard-log', wizardLogHandler);
+      ipcRenderer.removeListener('wizard-error', wizardErrorHandler);
+      ipcRenderer.removeListener('wizard-done', wizardDoneHandler);
     });
 
-    ipcRenderer.on('wizard-done', () => {
-      document.getElementById('info').textContent = 'Setup complete! Launching main window...';
-    });
   </script>
 </body>
 </html>

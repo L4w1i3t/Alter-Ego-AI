@@ -17,7 +17,7 @@ from emotions_api import detect_emotions
 from elevenlabs_api import convert_text_to_speech
 from db_memory import SQLMemory
 from ollama_manager import start_server, stop_server, query_ollama
-from openai_manager import query_openai, warmup_openai
+from openai_manager import query_openai
 
 # Flask App Setup
 app = Flask(__name__)
@@ -124,8 +124,6 @@ def query():
                 # Simplified Ollama warm-up with timeout
                 final_prompt = "User: hello\nAssistant:"
                 answer = query_ollama(final_prompt, persona_content=persona_prompt, timeout=max_warm_up_time)
-            else:
-                answer = warmup_openai()
                 
             warm_up_completed = True
             logging.info(f"Warm-up completed successfully in {time.time() - start_time:.2f}s")

@@ -3,7 +3,7 @@
     "version": "Alpha 1.1",
     "developedBy": "Lawliet",
     "tools": [
-        "OpenAI GPT-4o-latest",
+        "OpenAI GPT-4o-mini",
         "Ollama",
         "hf.co/artifish/llama3.2-uncensored",
         "Roberta-Base Go-Emotions",

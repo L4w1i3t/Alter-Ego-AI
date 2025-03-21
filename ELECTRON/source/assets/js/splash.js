@@ -37,8 +37,5 @@ document.addEventListener('DOMContentLoaded', () => {
   
     // Run loading simulation and then hide splash screen
     simulateLoading().then(hideSplashScreen);
-  
-    // Allow manual dismissal
-    // splashScreen.addEventListener('click', hideSplashScreen);
   });
   

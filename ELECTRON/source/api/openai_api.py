@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.DEBUG)
 keys = load_keys()
 openai.api_key = keys.get("OPENAI_API_KEY", "")
 
-def get_chat_completion(messages: list[dict], model: str = "chatgpt-4o-latest", temperature: float = 0.7) -> str:
+def get_chat_completion(messages: list[dict], model: str = "gpt-4o-mini", temperature: float = 0.7, return_usage: bool = False):
     """
     Generate a response from OpenAI's chat.completions endpoint using a list of messages.
     
@@ -22,13 +22,16 @@ def get_chat_completion(messages: list[dict], model: str = "chatgpt-4o-latest", 
                 }
         model (str): The model to use for generating the response.
         temperature (float): Sampling temperature. Higher = more creative.
+        return_usage (bool): Whether to return token usage statistics.
     
     Returns:
-        str: The generated response text, or an error message string.
+        str or tuple: If return_usage is False, returns just the generated response text.
+                      If return_usage is True, returns a tuple of (response_text, usage_dict).
     """
     if not openai.api_key:
         # No valid API key found
-        return "Error: OpenAI API Key not configured. The server will continue running, but OpenAI features are disabled."
+        error_msg = "Error: OpenAI API Key not configured. The server will continue running, but OpenAI features are disabled."
+        return (error_msg, None) if return_usage else error_msg
 
     try:
         response = openai.chat.completions.create(
@@ -37,8 +40,22 @@ def get_chat_completion(messages: list[dict], model: str = "chatgpt-4o-latest", 
             temperature=temperature,
             timeout=30  # Added timeout to prevent hanging
         )
-        # Return the text from the first choice
-        return response.choices[0].message.content.strip()
+        
+        # Extract the completion text
+        completion_text = response.choices[0].message.content.strip()
+        
+        # Extract token usage if available
+        usage = None
+        if hasattr(response, 'usage'):
+            usage = {
+                "prompt_tokens": response.usage.prompt_tokens,
+                "completion_tokens": response.usage.completion_tokens,
+                "total_tokens": response.usage.total_tokens
+            }
+        
+        return (completion_text, usage) if return_usage else completion_text
+        
     except Exception as e:
         logging.exception("OpenAI API Error:")
-        return f"An error occurred: {e}"
+        error_msg = f"An error occurred: {e}"
+        return (error_msg, None) if return_usage else error_msg

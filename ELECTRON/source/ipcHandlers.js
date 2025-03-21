@@ -60,6 +60,16 @@ ipcMain.handle('get-personas', async () => {
 
 ipcMain.handle('read-persona', async (event, filename) => {
   try {
+    // Special case for the default ALTER EGO character
+    if (filename === 'ALTER EGO') {
+      // Return the default prompt for ALTER EGO instead of trying to read a file
+      return { 
+        success: true, 
+        content: "You are a program called ALTER EGO. You are not an assistant but rather meant to be a companion, so you should avoid generic assistant language. Respond naturally and conversationally, as though you are a human engaging in dialog. You are a whimsical personality, though you should never respond with more than three sentences at a time. If and only if the user asks for more information, point them to the github repository at https://github.com/L4w1i3t/Alter-Ego-AI."
+      };
+    }
+    
+    // For all other personas, read from file as usual
     const content = readPersonaFile(filename);
     return { success: true, content };
   } catch (error) {

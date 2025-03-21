@@ -377,18 +377,30 @@ function createMainWindow() {
   mainWindow.setMenuBarVisibility(false);
   mainWindow.loadFile('index.html');
 
-  // Show model selection once main window is ready
+  // Once the window finishes loading, notify the renderer process to show the model selection overlay.
   mainWindow.webContents.once('did-finish-load', () => {
     mainWindow.webContents.send('show-model-selection');
   });
 
-  ipcMain.on('model-selected', (event, modeChoice) => {
-    // Use mainWindow reference instead of getFocusedWindow
+  // Define the listener as a named function so we can remove it later.
+  const modelSelectedListener = (event, modeChoice) => {
     mainWindow.webContents.send('show-warming-up');
     isOllamaUsed = (modeChoice === 'ollama');
     startPythonServer(isOllamaUsed ? 'ollama' : 'openai');
+  };
+
+  // Add the IPC listener.
+  ipcMain.on('model-selected', modelSelectedListener);
+
+  // Clean up when the window is closed.
+  mainWindow.on('closed', () => {
+    // Remove the specific IPC listener to avoid memory leaks.
+    ipcMain.removeListener('model-selected', modelSelectedListener);
+    // Nullify the reference to allow garbage collection.
+    mainWindow = null;
   });
 }
+
 
 /*********************************************************************
  * 4) START PYTHON SERVER
@@ -495,6 +507,10 @@ async function checkServerReady() {
         const timeTaken = ((Date.now() - startTime) / 1000).toFixed(1);
         console.log(`Python server warmed up successfully in ${timeTaken}s.`);
         updateWarmupProgress('Server ready!', 100);
+        if (startupTimeoutId) {
+          clearTimeout(startupTimeoutId);
+          startupTimeoutId = null;
+        }
         setTimeout(() => {
           if (mainWindow) mainWindow.webContents.send('hide-warming-up');
         }, 1500);
@@ -569,10 +585,11 @@ ipcMain.on('restart-app', () => {
   app.exit();
 });
 
+let startupTimeoutId = null;
 // Also add this to the start of main.js
 const maxAppStartupTime = 600000; // 10 minutes
 // Add overall app timeout safety mechanism
-setTimeout(() => {
+startupTimeoutId = setTimeout(() => {
   if (mainWindow) {
     mainWindow.webContents.send('warm-up-failure', {
       message: 'Application startup timed out',
