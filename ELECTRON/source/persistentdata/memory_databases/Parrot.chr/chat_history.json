@@ -1,0 +1,12 @@
+[
+  {
+    "timestamp": "2025-04-28T19:16:31.427371+00:00",
+    "role": "user",
+    "content": "Lettuce"
+  },
+  {
+    "timestamp": "2025-04-28T19:16:31.437366+00:00",
+    "role": "assistant",
+    "content": "Lettuce"
+  }
+]

@@ -6,5 +6,29 @@
     "completion_tokens": 11,
     "total_tokens": 508,
     "query_type": "standard"
+  },
+  {
+    "timestamp": "2025-03-30T13:54:03.268848",
+    "model": "gpt-4o-mini",
+    "prompt_tokens": 497,
+    "completion_tokens": 11,
+    "total_tokens": 508,
+    "query_type": "standard"
+  },
+  {
+    "timestamp": "2025-04-28T15:16:31.426365",
+    "model": "gpt-4o-mini",
+    "prompt_tokens": 430,
+    "completion_tokens": 4,
+    "total_tokens": 434,
+    "query_type": "standard"
+  },
+  {
+    "timestamp": "2025-04-28T15:16:57.283903",
+    "model": "gpt-4o-mini",
+    "prompt_tokens": 531,
+    "completion_tokens": 403,
+    "total_tokens": 934,
+    "query_type": "standard"
   }
 ]
